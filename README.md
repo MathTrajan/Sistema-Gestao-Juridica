@@ -118,4 +118,4 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## Licença
 
-Projeto acadêmico — uso restrito.
+Projeto pessoal — todos os direitos reservados.
