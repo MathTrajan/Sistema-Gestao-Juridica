@@ -1,6 +1,8 @@
 # JurisFlow
 
-Sistema de gestão jurídica integrado para escritórios de advocacia. Desenvolvido como protótipo acadêmico com estrutura pensada para evolução a produto comercial (SaaS).
+Sistema de gestão jurídica integrado para escritórios de advocacia. Desenvolvido como protótipo pessoal com estrutura pensada para evolução a produto comercial (SaaS).
+
+**Demo:** https://projetosasjuridico.vercel.app
 
 ## Objetivo
 
