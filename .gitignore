@@ -1,0 +1,35 @@
+# Vercel
+.vercel/
+
+# Node
+jurisflow/node_modules/
+jurisflow/.next/
+jurisflow/out/
+jurisflow/build/
+jurisflow/.vercel/
+
+# Environment — never commit real credentials
+jurisflow/.env
+jurisflow/.env.local
+jurisflow/.env.*.local
+
+# Prisma generated client
+jurisflow/src/generated/
+
+# TypeScript build info
+jurisflow/*.tsbuildinfo
+jurisflow/next-env.d.ts
+
+# Claude Code internal files
+jurisflow/CLAUDE.md
+jurisflow/AGENTS.md
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db

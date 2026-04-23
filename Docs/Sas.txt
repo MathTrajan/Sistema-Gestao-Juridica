@@ -1,0 +1,655 @@
+TERMO DE ABERTURA DO PROJETO
+Sistema Integrado de Gestão para Escritórios de Advocacia
+1. Identificação do Projeto
+Nome do Projeto:
+Sistema Integrado de Gestão Jurídica para Escritórios de Advocacia
+Patrocinadora do Projeto:
+Geovanna Ferreira Silva Pinheiro
+Tipo de Projeto:
+Desenvolvimento de software jurídico (LegalTech)
+Modelo do Sistema:
+Software jurídico inspirado em plataformas como Astrea, porém estruturado para operação interna escalável e futura comercialização no modelo SaaS.
+________________________________________
+2. Contexto e Justificativa
+O projeto tem como finalidade desenvolver um sistema integrado de gestão para escritórios de advocacia, capaz de organizar de forma estruturada todas as áreas operacionais do escritório.
+A iniciativa surge da necessidade de estruturar a operação jurídica desde o início da carreira profissional da patrocinadora do projeto, garantindo:
+•	organização dos fluxos internos do escritório 
+•	padronização de procedimentos 
+•	controle de tarefas e prazos 
+•	comunicação entre equipes 
+•	escalabilidade da operação jurídica 
+O sistema também será desenvolvido com arquitetura adequada para futura comercialização para outros advogados e escritórios, permitindo que cada cliente possua sua própria base de dados e ambiente isolado.
+________________________________________
+3. Objetivo do Projeto
+Desenvolver um sistema completo de gestão jurídica e administrativa, capaz de integrar todas as áreas operacionais de um escritório de advocacia, permitindo:
+•	gestão de clientes 
+•	gestão de processos judiciais e administrativos 
+•	organização de tarefas entre equipes 
+•	controle de prazos processuais 
+•	controle financeiro 
+•	gestão comercial 
+•	gestão de marketing 
+•	comunicação interna entre departamentos 
+O sistema deverá funcionar de forma simples, intuitiva, colaborativa e altamente escalável.
+________________________________________
+4. Estrutura Organizacional do Sistema
+O sistema será estruturado em cinco áreas principais, cada uma responsável por funções específicas dentro da operação do escritório.
+4.1 Área Comercial
+Responsável pelo processo de captação e conversão de clientes.
+Funções principais:
+•	atendimento inicial de clientes 
+•	gestão de leads 
+•	CRM jurídico 
+•	registro de atendimentos 
+•	fechamento de contratos 
+•	coleta de documentos iniciais 
+•	cadastro inicial do cliente no sistema 
+•	comunicação com a equipe financeira 
+Ferramentas esperadas:
+•	funil de vendas 
+•	integração com WhatsApp 
+•	registro de contatos 
+•	histórico de atendimentos 
+•	controle de propostas e contratos 
+________________________________________
+4.2 Área de Controladoria Jurídica
+Responsável pelo controle operacional dos processos e fluxo interno de trabalho.
+Funções principais:
+•	verificação da documentação do cliente 
+•	solicitação de documentos complementares 
+•	organização do dossiê do cliente 
+•	distribuição de tarefas para o jurídico 
+•	protocolo de peças processuais 
+•	controle de prazos 
+•	comunicação processual com clientes 
+•	gestão de atividades entre departamentos 
+A controladoria será o centro operacional do escritório.
+________________________________________
+4.3 Área Jurídica
+Responsável pela execução técnica do trabalho jurídico.
+Funções principais:
+•	elaboração de petições iniciais 
+•	elaboração de manifestações processuais 
+•	recursos 
+•	manifestações intermediárias 
+•	pareceres jurídicos 
+•	estratégias processuais 
+Fluxo:
+Recebe tarefas da controladoria e devolve as peças para protocolo.
+________________________________________
+4.4 Área Financeira
+Responsável pela gestão financeira do escritório.
+Funções principais:
+•	gestão de caixa 
+•	contas a pagar 
+•	contas a receber 
+•	controle de honorários 
+•	gestão de contratos financeiros 
+•	emissão de cobranças 
+•	conciliação financeira 
+•	relatórios financeiros 
+Também deverá existir integração com a área comercial para controle de contratos e recebimentos.
+________________________________________
+4.5 Área de Marketing
+Responsável pela gestão da presença digital e geração de demanda.
+Funções principais:
+•	gestão de redes sociais 
+•	criação de conteúdo 
+•	gestão de campanhas de anúncios 
+•	design de materiais 
+•	geração de leads 
+•	acompanhamento de métricas 
+A área de marketing terá funcionamento independente das demais.
+________________________________________
+5. Estrutura de Usuários e Permissões
+O sistema terá três níveis principais de acesso:
+5.1 Gestor Geral
+Usuário com acesso total ao sistema.
+Funções:
+•	visualizar todas as áreas 
+•	gerenciar usuários 
+•	acessar relatórios completos 
+•	supervisionar operações 
+Este perfil será o proprietário do escritório.
+________________________________________
+5.2 Gerente de Equipe
+Responsável por gerenciar cada departamento.
+Funções:
+•	delegar tarefas 
+•	acompanhar produtividade 
+•	supervisionar equipe 
+•	organizar fluxo de trabalho 
+Cada área terá seu gerente específico.
+________________________________________
+5.3 Colaboradores
+Usuários responsáveis pela execução das tarefas.
+Funções:
+•	receber tarefas 
+•	executar atividades 
+•	registrar atualizações 
+•	anexar documentos 
+•	comunicar progresso 
+________________________________________
+6. Fluxo Operacional dos Processos
+O fluxo padrão de funcionamento do escritório será:
+Etapa 1 — Comercial
+•	atendimento do cliente 
+•	fechamento de contrato 
+•	coleta de documentos 
+•	cadastro inicial do cliente 
+________________________________________
+Etapa 2 — Controladoria
+•	conferência documental 
+•	solicitação de documentos faltantes 
+•	preparação do caso para o jurídico 
+________________________________________
+Etapa 3 — Jurídico
+•	elaboração da petição inicial 
+•	devolução da peça à controladoria 
+________________________________________
+Etapa 4 — Controladoria
+•	protocolo da petição inicial 
+•	cadastro do processo 
+•	comunicação com o cliente 
+________________________________________
+Etapa 5 — Jurídico
+•	elaboração das peças processuais conforme intimações 
+________________________________________
+Etapa 6 — Controladoria
+•	protocolo das manifestações 
+As etapas 5 e 6 se repetem até o encerramento do processo.
+________________________________________
+7. Integração com Tribunais
+O sistema deverá integrar-se com sistemas de consulta processual utilizando dados vinculados às OABs dos advogados cadastrados.
+A consulta deverá utilizar bases como:
+Conselho Nacional de Justiça
+DataJud
+Funções esperadas:
+•	consulta automática de processos 
+•	captura de publicações 
+•	identificação de intimações 
+•	atualização diária de movimentações 
+•	geração automática de prazos 
+Cada advogado terá suas credenciais vinculadas à sua inscrição na Ordem dos Advogados do Brasil.
+________________________________________
+8. Comunicação Interna
+O sistema deverá permitir comunicação entre equipes por meio de:
+•	atribuição de tarefas 
+•	comentários em tarefas 
+•	notificações internas 
+•	anexos de documentos 
+•	solicitações entre departamentos 
+Exemplos:
+•	financeiro solicitando documento ao comercial 
+•	jurídico solicitando documento à controladoria 
+•	controladoria solicitando manifestação ao jurídico 
+________________________________________
+9. Tipos de Processos
+O sistema deverá permitir a gestão de:
+•	processos judiciais 
+•	processos administrativos 
+Ambos seguirão o mesmo padrão de fluxo operacional.
+________________________________________
+10. Escalabilidade e Comercialização
+Após validação interna do sistema, será avaliada a possibilidade de comercialização para terceiros.
+O software deverá possuir estrutura multiempresa, permitindo que cada escritório possua:
+•	usuários próprios 
+•	processos próprios 
+•	clientes próprios 
+•	dados isolados 
+O modelo de comercialização previsto será software jurídico como serviço (SaaS).
+________________________________________
+11. Resultados Esperados
+Ao final do projeto, espera-se obter:
+•	sistema completo de gestão jurídica 
+•	automação de fluxos operacionais 
+•	organização do escritório 
+•	controle de prazos e tarefas 
+•	escalabilidade da operação 
+•	base tecnológica para futura LegalTech
+1. MAPA COMPLETO DE MÓDULOS DE UM SISTEMA JURÍDICO PROFISSIONAL
+A estrutura abaixo contempla 80+ funcionalidades organizadas por departamentos do escritório.
+________________________________________
+1. MÓDULO COMERCIAL (CRM JURÍDICO)
+Responsável pela captação e conversão de clientes.
+Funcionalidades:
+1.	Cadastro de leads 
+2.	Funil de vendas jurídico 
+3.	Gestão de oportunidades 
+4.	Registro de atendimentos 
+5.	Histórico de contatos 
+6.	Integração com WhatsApp 
+7.	Integração com e-mail 
+8.	Agenda de reuniões 
+9.	Registro de propostas enviadas 
+10.	Modelos de propostas comerciais 
+11.	Controle de negociações 
+12.	Conversão de lead em cliente 
+13.	Cadastro inicial do cliente 
+14.	Upload de documentos iniciais 
+15.	Gestão de contratos jurídicos 
+16.	Assinatura eletrônica de contratos 
+17.	Controle de status de negociação 
+18.	Automação de follow-up 
+19.	Pipeline de vendas 
+20.	Relatório de conversão comercial 
+________________________________________
+2. MÓDULO DE CLIENTES
+21.	Cadastro completo de clientes 
+22.	Cadastro de pessoas físicas 
+23.	Cadastro de pessoas jurídicas 
+24.	Cadastro de documentos pessoais 
+25.	Cadastro de contatos 
+26.	Histórico de atendimentos 
+27.	Histórico de processos do cliente 
+28.	Upload de documentos do cliente 
+29.	Área do cliente (portal) 
+30.	Comunicação direta com cliente 
+________________________________________
+3. MÓDULO DE CONTROLADORIA JURÍDICA
+Esse é o centro operacional do escritório.
+31.	Recebimento de novos contratos 
+32.	Conferência de documentos 
+33.	Solicitação de documentos faltantes 
+34.	Criação de dossiê do cliente 
+35.	Organização documental 
+36.	Distribuição de tarefas ao jurídico 
+37.	Controle de andamento processual 
+38.	Gestão de publicações 
+39.	Gestão de intimações 
+40.	Cadastro de processos 
+41.	Gestão de prazos processuais 
+42.	Monitoramento de movimentações 
+43.	Controle de protocolos 
+44.	Comunicação com clientes sobre andamento 
+45.	Controle de cumprimento de tarefas 
+46.	Auditoria de processos 
+________________________________________
+4. MÓDULO JURÍDICO (PRODUÇÃO JURÍDICA)
+47.	Elaboração de petições iniciais 
+48.	Elaboração de manifestações processuais 
+49.	Elaboração de recursos 
+50.	Biblioteca de modelos de peças 
+51.	Editor jurídico integrado 
+52.	Versionamento de documentos 
+53.	Controle de revisão de peças 
+54.	Histórico de peças elaboradas 
+55.	Vinculação da peça ao processo 
+56.	Controle de produtividade jurídica 
+________________________________________
+5. MÓDULO DE PROCESSOS
+57.	Cadastro de processos judiciais 
+58.	Cadastro de processos administrativos 
+59.	Cadastro de tribunal e vara 
+60.	Cadastro de partes do processo 
+61.	Cadastro de advogados vinculados 
+62.	Upload de documentos processuais 
+63.	Histórico completo do processo 
+64.	Linha do tempo processual 
+65.	Controle de status do processo 
+________________________________________
+6. CAPTURA AUTOMÁTICA DE PUBLICAÇÕES
+Integração com sistemas do judiciário.
+66.	Captura automática de publicações 
+67.	Captura de intimações 
+68.	Atualização automática de movimentações 
+69.	Consulta por OAB do advogado 
+70.	Consulta automática de processos 
+71.	Importação automática de novos andamentos 
+72.	Identificação automática de prazos 
+73.	Alerta de novas publicações 
+________________________________________
+7. MÓDULO DE TAREFAS
+74.	Criação de tarefas internas 
+75.	Delegação de tarefas 
+76.	Controle de responsáveis 
+77.	Controle de prioridade 
+78.	Checklist de tarefas 
+79.	Comentários em tarefas 
+80.	Anexos em tarefas 
+81.	Histórico de execução 
+________________________________________
+8. MÓDULO DE AGENDA
+82.	Agenda jurídica 
+83.	Controle de audiências 
+84.	Controle de prazos 
+85.	Agenda de reuniões 
+86.	Alertas automáticos 
+________________________________________
+9. MÓDULO FINANCEIRO
+Funções financeiras do escritório.
+87.	Cadastro de honorários contratuais 
+88.	Cadastro de honorários de êxito 
+89.	Contas a pagar 
+90.	Contas a receber 
+91.	Fluxo de caixa 
+92.	Emissão de boletos 
+93.	Cobrança via PIX 
+94.	Controle de inadimplência 
+95.	Relatórios financeiros 
+96.	Conciliação bancária 
+________________________________________
+10. MÓDULO DE MARKETING
+97.	Gestão de redes sociais 
+98.	Gestão de campanhas de anúncios 
+99.	Controle de leads gerados 
+100.	Métricas de marketing 
+101.	Planejamento de conteúdo 
+102.	Gestão de materiais gráficos 
+________________________________________
+11. MÓDULO DE RELATÓRIOS E INDICADORES
+103.	Relatório de produtividade 
+104.	Relatório de processos por área 
+105.	Relatório de faturamento 
+106.	Relatório de clientes ativos 
+107.	Relatório de conversão comercial 
+108.	Relatório de desempenho da equipe 
+________________________________________
+12. MÓDULO DE USUÁRIOS E PERMISSÕES
+109.	Cadastro de usuários 
+110.	Controle de acesso por perfil 
+111.	Gestor geral 
+112.	Gerente de departamento 
+113.	Colaborador 
+114.	Auditoria de acessos 
+________________________________________
+13. MÓDULO DE COMUNICAÇÃO INTERNA
+115.	Chat interno entre equipes 
+116.	Comentários em processos 
+117.	Comentários em tarefas 
+118.	Notificações internas 
+119.	Solicitações entre departamentos 
+________________________________________
+2. FLUXOGRAMA COMPLETO DO FUNCIONAMENTO DO ESCRITÓRIO
+Fluxo operacional do escritório desde o primeiro contato até o fim do processo.
+________________________________________
+ETAPA 1 — CAPTAÇÃO DO CLIENTE
+Marketing
+↓
+Geração de lead
+↓
+Comercial recebe o contato
+↓
+Atendimento inicial
+↓
+Registro no CRM
+________________________________________
+ETAPA 2 — NEGOCIAÇÃO
+Comercial
+↓
+Análise do caso
+↓
+Envio de proposta
+↓
+Negociação
+↓
+Fechamento do contrato
+________________________________________
+ETAPA 3 — CADASTRO DO CLIENTE
+Comercial
+↓
+Cadastro do cliente no sistema
+↓
+Upload de documentos iniciais
+↓
+Envio para Controladoria
+________________________________________
+ETAPA 4 — ANÁLISE DOCUMENTAL
+Controladoria
+↓
+Conferência de documentos
+↓
+Solicitação de documentos faltantes
+↓
+Organização do dossiê do cliente
+________________________________________
+ETAPA 5 — PRODUÇÃO JURÍDICA
+Controladoria
+↓
+Criação da tarefa para jurídico
+↓
+Jurídico elabora petição inicial
+↓
+Devolução para controladoria
+________________________________________
+ETAPA 6 — PROTOCOLO
+Controladoria
+↓
+Protocolo da petição inicial
+↓
+Cadastro do processo no sistema
+↓
+Comunicação ao cliente
+________________________________________
+ETAPA 7 — ACOMPANHAMENTO PROCESSUAL
+Sistema consulta tribunais via integração com
+DataJud
+↓
+Controladoria recebe:
+•	publicações 
+•	intimações 
+•	movimentações 
+↓
+Controladoria cria tarefa para jurídico
+________________________________________
+ETAPA 8 — MANIFESTAÇÃO PROCESSUAL
+Jurídico
+↓
+Elaboração da peça
+↓
+Envio para controladoria
+________________________________________
+ETAPA 9 — NOVO PROTOCOLO
+Controladoria
+↓
+Protocolo da manifestação
+________________________________________
+ETAPA 10 — REPETIÇÃO DO CICLO PROCESSUAL
+Publicação
+↓
+Controladoria
+↓
+Jurídico
+↓
+Protocolo
+(O ciclo se repete até o final do processo)
+________________________________________
+ETAPA 11 — FINALIZAÇÃO DO PROCESSO
+Decisão final
+↓
+Comunicação ao cliente
+↓
+Encerramento do processo
+↓
+Arquivamento
+1. AUTOMAÇÕES DE CAPTAÇÃO DE PROCESSOS
+Automação 1 — Importação automática de processos pela OAB
+O sistema consulta diariamente processos vinculados à OAB cadastrada.
+Fluxo:
+Sistema
+↓
+consulta tribunais
+↓
+detecta novo processo
+↓
+cadastra automaticamente no sistema
+Campos importados:
+•	número do processo 
+•	tribunal 
+•	vara 
+•	partes 
+•	classe processual 
+Impacto:
+elimina cadastro manual de processos.
+________________________________________
+Automação 2 — Cadastro automático do cliente
+Quando o processo é importado:
+•	identifica CPF/CNPJ 
+•	cria cadastro automático do cliente 
+Impacto:
+evita cadastro duplicado.
+________________________________________
+2. AUTOMAÇÕES DE PUBLICAÇÕES E INTIMAÇÕES
+Automação 3 — Captura automática de publicações
+Todos os dias o sistema consulta:
+•	diário da justiça 
+•	movimentações processuais 
+Fluxo:
+nova publicação
+↓
+sistema identifica processo
+↓
+vincula automaticamente
+________________________________________
+Automação 4 — Classificação automática da publicação
+Uso de IA ou regras simples.
+Exemplos:
+"intime-se"
+→ classificado como intimação
+"sentença"
+→ classificado como decisão
+Impacto:
+reduz análise manual.
+________________________________________
+3. AUTOMAÇÃO DE PRAZOS PROCESSUAIS
+Automação 5 — Cálculo automático de prazo
+Quando surge uma intimação:
+sistema identifica:
+•	tipo de ato 
+•	prazo legal 
+↓
+gera automaticamente o prazo.
+Inclui:
+•	dias úteis 
+•	feriados 
+•	suspensão de prazo 
+Impacto:
+evita erro humano.
+________________________________________
+Automação 6 — Agenda automática de prazos
+Quando o prazo é criado:
+sistema agenda automaticamente:
+•	prazo final 
+•	lembrete 5 dias antes 
+•	lembrete 2 dias antes 
+•	alerta no dia 
+________________________________________
+4. AUTOMAÇÃO DE DISTRIBUIÇÃO DE TAREFAS
+Automação 7 — Distribuição automática para o jurídico
+Quando aparece uma intimação:
+sistema identifica:
+•	tipo de processo 
+•	área jurídica 
+↓
+envia automaticamente para o advogado responsável.
+Exemplo:
+intimação em processo trabalhista
+→ advogado trabalhista
+________________________________________
+Automação 8 — Criação automática de tarefa
+Nova intimação
+↓
+sistema cria tarefa
+Campos:
+•	responsável 
+•	prazo 
+•	tipo de peça 
+________________________________________
+5. AUTOMAÇÃO DE DOCUMENTOS
+Automação 9 — Organização automática de documentos
+Uploads feitos pelo cliente ou equipe:
+sistema classifica automaticamente:
+•	documentos pessoais 
+•	provas 
+•	petições 
+•	decisões 
+________________________________________
+Automação 10 — Vinculação automática ao processo
+Documento enviado
+↓
+sistema identifica número do processo
+↓
+vincula automaticamente
+________________________________________
+6. AUTOMAÇÃO DE COMUNICAÇÃO COM CLIENTE
+Automação 11 — Aviso automático de protocolo
+Quando a controladoria protocola uma peça:
+cliente recebe mensagem automática:
+"Foi protocolada manifestação no seu processo."
+________________________________________
+Automação 12 — Aviso automático de movimentação
+Nova movimentação processual
+↓
+cliente recebe resumo simples.
+________________________________________
+7. AUTOMAÇÃO DE CHECKLIST DE PROCESSO
+Automação 13 — Checklist automático de processo
+Quando o processo é criado:
+sistema gera checklist:
+•	documentos recebidos 
+•	petição inicial 
+•	protocolo 
+•	audiência 
+Impacto:
+padroniza a operação.
+________________________________________
+8. AUTOMAÇÃO DE AUDIÊNCIAS
+Automação 14 — Captura automática de audiências
+Sistema identifica:
+•	data 
+•	horário 
+•	tipo 
+↓
+agenda automaticamente.
+________________________________________
+Automação 15 — Lembrete de audiência
+Advogado recebe alertas:
+•	7 dias antes 
+•	1 dia antes 
+•	2 horas antes 
+________________________________________
+9. AUTOMAÇÃO DE MONITORAMENTO DE PROCESSO
+Automação 16 — Monitoramento diário
+Sistema verifica diariamente:
+•	novos andamentos 
+•	decisões 
+•	despachos 
+Impacto:
+controladoria não precisa consultar tribunal manualmente.
+________________________________________
+10. AUTOMAÇÃO DE RELATÓRIOS
+Automação 17 — Relatório automático de produtividade
+Sistema gera:
+•	peças elaboradas 
+•	prazos cumpridos 
+•	processos ativos 
+________________________________________
+Automação 18 — Relatório de processos parados
+Identifica:
+processos sem movimentação há 90 dias.
+________________________________________
+11. AUTOMAÇÃO FINANCEIRA
+Automação 19 — Geração automática de cobrança
+Quando contrato é cadastrado:
+sistema gera parcelas automaticamente.
+________________________________________
+Automação 20 — Aviso de inadimplência
+Cliente em atraso
+↓
+envio automático de lembrete.
+________________________________________
+IMPACTO REAL DESSAS AUTOMAÇÕES
+Em um escritório médio:
+sem automação
+controladoria precisa de 3 a 5 pessoas
+com automação
+1 pessoa consegue controlar até 2.000 processos.
+________________________________________
+AUTOMAÇÃO MAIS AVANÇADA (POUQUÍSSIMOS SISTEMAS TÊM)
+IA que lê a publicação e sugere a peça jurídica necessária.
+Exemplo:
+Publicação:
+"Intime-se a parte autora para manifestação em 15 dias."
+Sistema sugere:
+"Tarefa: Manifestação processual."
+
