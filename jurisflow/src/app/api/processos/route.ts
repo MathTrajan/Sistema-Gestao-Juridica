@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { StatusProcesso } from '@prisma/client'
 import { AREAS_JURIDICAS, TIPOS_PROCESSO, FASES_PROCESSO, STATUS_PROCESSO } from '@/lib/constants'
 
 export async function GET(req: Request) {
@@ -19,7 +20,7 @@ export async function GET(req: Request) {
 
   const where = {
     escritorioId,
-    ...(status && STATUS_PROCESSO.includes(status) ? { status } : {}),
+    ...(status && STATUS_PROCESSO.includes(status as StatusProcesso) ? { status: status as StatusProcesso } : {}),
     ...(search
       ? {
           OR: [
