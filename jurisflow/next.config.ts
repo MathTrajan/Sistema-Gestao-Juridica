@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -16,6 +16,19 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-};
+}
 
-export default nextConfig;
+// To enable Sentry error monitoring:
+// 1. Run: npm install @sentry/nextjs
+// 2. Set NEXT_PUBLIC_SENTRY_DSN in your environment variables
+// 3. Uncomment the block below and remove the `export default nextConfig` line
+//
+// import { withSentryConfig } from '@sentry/nextjs'
+// export default withSentryConfig(nextConfig, {
+//   silent: !process.env.CI,
+//   disableLogger: true,
+//   tunnelRoute: '/monitoring',
+//   autoInstrumentServerFunctions: true,
+// })
+
+export default nextConfig

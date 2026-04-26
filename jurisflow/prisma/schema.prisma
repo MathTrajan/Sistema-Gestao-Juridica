@@ -61,6 +61,8 @@ model Usuario {
   comentarios          Comentario[]
 
   @@unique([email, escritorioId])
+  @@index([escritorioId])
+  @@index([email])
   @@map("usuarios")
 }
 
@@ -116,6 +118,8 @@ model Cliente {
   lancamentos  Lancamento[]
   lead         Lead?
 
+  @@index([escritorioId])
+  @@index([escritorioId, status])
   @@map("clientes")
 }
 
@@ -184,6 +188,9 @@ model Processo {
   movimentacoes Movimentacao[]
   andamentos    Andamento[]
 
+  @@index([escritorioId])
+  @@index([escritorioId, status])
+  @@index([clienteId])
   @@map("processos")
 }
 
@@ -232,6 +239,9 @@ model Tarefa {
 
   comentarios Comentario[]
 
+  @@index([escritorioId])
+  @@index([escritorioId, status])
+  @@index([dataVencimento])
   @@map("tarefas")
 }
 
@@ -266,6 +276,8 @@ model Prazo {
   processoId String
   processo   Processo @relation(fields: [processoId], references: [id])
 
+  @@index([processoId])
+  @@index([dataFinal, status])
   @@map("prazos")
 }
 
@@ -310,6 +322,8 @@ model Lead {
 
   atendimentos Atendimento[]
 
+  @@index([escritorioId])
+  @@index([escritorioId, etapa])
   @@map("leads")
 }
 
@@ -347,6 +361,9 @@ model Lancamento {
   clienteId    String?
   cliente      Cliente?   @relation(fields: [clienteId], references: [id])
 
+  @@index([escritorioId])
+  @@index([escritorioId, status])
+  @@index([dataVencimento])
   @@map("lancamentos")
 }
 

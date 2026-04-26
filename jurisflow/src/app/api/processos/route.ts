@@ -3,23 +3,72 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AREAS_JURIDICAS, TIPOS_PROCESSO, FASES_PROCESSO, STATUS_PROCESSO } from '@/lib/constants'
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const escritorioId = session.user.escritorioId
+  const { searchParams } = new URL(req.url)
+
+  // ?all=true bypasses pagination (used for dropdowns/selects)
+  const all = searchParams.get('all') === 'true'
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
+  const search = searchParams.get('search')?.trim()
+  const status = searchParams.get('status')?.trim()
+
+  const where = {
+    escritorioId,
+    ...(status && STATUS_PROCESSO.includes(status) ? { status } : {}),
+    ...(search
+      ? {
+          OR: [
+            { numero: { contains: search, mode: 'insensitive' as const } },
+            { tipoAcao: { contains: search, mode: 'insensitive' as const } },
+            { cliente: { nomeCompleto: { contains: search, mode: 'insensitive' as const } } },
+          ],
+        }
+      : {}),
+  }
 
   try {
-    const processos = await prisma.processo.findMany({
-      where: { escritorioId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        cliente: { select: { id: true, nomeCompleto: true } },
-        responsavel: { select: { id: true, nome: true } },
-        _count: { select: { tarefas: true, prazos: true } },
+    if (all) {
+      const processos = await prisma.processo.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          numero: true,
+          cliente: { select: { nomeCompleto: true } },
+        },
+      })
+      return NextResponse.json(processos)
+    }
+
+    const [processos, total] = await Promise.all([
+      prisma.processo.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          cliente: { select: { id: true, nomeCompleto: true } },
+          responsavel: { select: { id: true, nome: true } },
+          _count: { select: { tarefas: true, prazos: true } },
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.processo.count({ where }),
+    ])
+
+    return NextResponse.json({
+      data: processos,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     })
-    return NextResponse.json(processos)
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

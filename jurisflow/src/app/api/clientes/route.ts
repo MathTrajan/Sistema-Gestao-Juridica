@@ -3,19 +3,63 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AREAS_JURIDICAS, ORIGENS_CLIENTE, STATUS_CLIENTE, TIPOS_CLIENTE } from '@/lib/constants'
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const escritorioId = session.user.escritorioId
+  const { searchParams } = new URL(req.url)
+
+  // ?all=true bypasses pagination (used for dropdowns/selects)
+  const all = searchParams.get('all') === 'true'
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
+  const search = searchParams.get('search')?.trim()
+
+  const where = {
+    escritorioId,
+    ...(search
+      ? {
+          OR: [
+            { nomeCompleto: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { cpf: { contains: search } },
+            { cnpj: { contains: search } },
+          ],
+        }
+      : {}),
+  }
 
   try {
-    const clientes = await prisma.cliente.findMany({
-      where: { escritorioId },
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { processos: true } } },
+    if (all) {
+      const clientes = await prisma.cliente.findMany({
+        where,
+        orderBy: { nomeCompleto: 'asc' },
+        select: { id: true, nomeCompleto: true },
+      })
+      return NextResponse.json(clientes)
+    }
+
+    const [clientes, total] = await Promise.all([
+      prisma.cliente.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { processos: true } } },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.cliente.count({ where }),
+    ])
+
+    return NextResponse.json({
+      data: clientes,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     })
-    return NextResponse.json(clientes)
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
