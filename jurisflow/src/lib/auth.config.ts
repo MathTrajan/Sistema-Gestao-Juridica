@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from 'next-auth'
 
 export const authConfig: NextAuthConfig = {
-  secret: process.env.NEXTAUTH_SECRET,
+  // NextAuth v5 reads AUTH_SECRET automatically — no need to set secret explicitly
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
