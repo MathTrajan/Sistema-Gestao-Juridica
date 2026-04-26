@@ -26,7 +26,7 @@ export const clienteSchema = z.object({
   areaJuridica: z.string().optional(),
   origemCliente: z.string().optional(),
   observacoes: z.string().optional(),
-  status: z.enum(['ATIVO', 'INATIVO', 'PROSPECTO', 'DOCUMENTACAO_PENDENTE']).default('ATIVO'),
+  status: z.enum(['ATIVO', 'INATIVO', 'PROSPECTO', 'DOCUMENTACAO_PENDENTE']),
 })
 
 export type ClienteFormData = z.infer<typeof clienteSchema>
@@ -34,19 +34,17 @@ export type ClienteFormData = z.infer<typeof clienteSchema>
 export const processoSchema = z.object({
   clienteId: z.string().min(1, 'Selecione um cliente'),
   responsavelId: z.string().optional(),
-  tipo: z.enum(['JUDICIAL', 'ADMINISTRATIVO']).default('JUDICIAL'),
-  fase: z.enum(['CONHECIMENTO', 'RECURSAL', 'EXECUCAO', 'ENCERRADO']).default('CONHECIMENTO'),
-  status: z
-    .enum([
-      'EM_ANDAMENTO',
-      'AGUARDANDO_PECA',
-      'AGUARDANDO_CLIENTE',
-      'SUSPENSO',
-      'ENCERRADO_PROCEDENTE',
-      'ENCERRADO_IMPROCEDENTE',
-      'ARQUIVADO',
-    ])
-    .default('EM_ANDAMENTO'),
+  tipo: z.enum(['JUDICIAL', 'ADMINISTRATIVO']),
+  fase: z.enum(['CONHECIMENTO', 'RECURSAL', 'EXECUCAO', 'ENCERRADO']),
+  status: z.enum([
+    'EM_ANDAMENTO',
+    'AGUARDANDO_PECA',
+    'AGUARDANDO_CLIENTE',
+    'SUSPENSO',
+    'ENCERRADO_PROCEDENTE',
+    'ENCERRADO_IMPROCEDENTE',
+    'ARQUIVADO',
+  ]),
   numero: z.string().optional(),
   tribunal: z.string().optional(),
   vara: z.string().optional(),
@@ -68,10 +66,8 @@ export type ProcessoFormData = z.infer<typeof processoSchema>
 export const tarefaSchema = z.object({
   titulo: z.string().min(2, 'Título deve ter pelo menos 2 caracteres'),
   descricao: z.string().optional(),
-  status: z
-    .enum(['A_FAZER', 'EM_ANDAMENTO', 'AGUARDANDO_REVISAO', 'CONCLUIDO', 'CANCELADO'])
-    .default('A_FAZER'),
-  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).default('NORMAL'),
+  status: z.enum(['A_FAZER', 'EM_ANDAMENTO', 'AGUARDANDO_REVISAO', 'CONCLUIDO', 'CANCELADO']),
+  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']),
   dataVencimento: z.string().optional(),
   responsavelId: z.string().optional(),
   processoId: z.string().optional(),
