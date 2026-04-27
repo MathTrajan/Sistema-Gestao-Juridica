@@ -1,0 +1,69 @@
+import { NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { TIPOS_PRAZO, STATUS_PRAZO } from '@/lib/constants'
+
+async function getPrazoComEscritorio(id: string) {
+  return prisma.prazo.findFirst({
+    where: { id },
+    include: { processo: { select: { escritorioId: true } } },
+  })
+}
+
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const { id } = await params
+  const escritorioId = session.user.escritorioId
+  const body = await req.json()
+
+  try {
+    const prazo = await getPrazoComEscritorio(id)
+    if (!prazo || prazo.processo.escritorioId !== escritorioId) {
+      return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
+    }
+
+    const data: Record<string, unknown> = {}
+    if (body.titulo !== undefined) data.titulo = String(body.titulo).trim()
+    if (body.tipo !== undefined && (TIPOS_PRAZO as readonly string[]).includes(body.tipo)) data.tipo = body.tipo
+    if (body.dataInicio !== undefined) {
+      const d = new Date(body.dataInicio)
+      if (!isNaN(d.getTime())) data.dataInicio = d
+    }
+    if (body.dataFinal !== undefined) {
+      const d = new Date(body.dataFinal)
+      if (!isNaN(d.getTime())) data.dataFinal = d
+    }
+    if (body.diasUteis !== undefined) data.diasUteis = body.diasUteis ? parseInt(body.diasUteis) : null
+    if (body.status !== undefined && (STATUS_PRAZO as readonly string[]).includes(body.status)) data.status = body.status
+    if (body.observacoes !== undefined) data.observacoes = body.observacoes ? String(body.observacoes).trim() : null
+
+    await prisma.prazo.update({ where: { id }, data })
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  }
+}
+
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const { id } = await params
+  const escritorioId = session.user.escritorioId
+
+  try {
+    const prazo = await getPrazoComEscritorio(id)
+    if (!prazo || prazo.processo.escritorioId !== escritorioId) {
+      return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
+    }
+
+    await prisma.prazo.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  }
+}
