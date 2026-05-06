@@ -81,7 +81,7 @@ export default function ProcessosClient({ processos }: { processos: Processo[] }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {miniCards.map(({ icon: Icon, value, label, bg, color, glow, delay }) => (
           <motion.div
             key={label}
@@ -169,15 +169,15 @@ export default function ProcessosClient({ processos }: { processos: Processo[] }
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px]">
+            <table className="w-full min-w-[480px]">
               <thead>
                 <tr className="border-b border-white/10 bg-white/3">
                   <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Numero / Cliente</th>
-                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Area</th>
-                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Tribunal</th>
-                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Fase</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden sm:table-cell">Area</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden lg:table-cell">Tribunal</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden md:table-cell">Fase</th>
                   <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Status</th>
-                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Responsavel</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden lg:table-cell">Responsavel</th>
                   <th className="px-5 py-4" />
                 </tr>
               </thead>
@@ -198,7 +198,7 @@ export default function ProcessosClient({ processos }: { processos: Processo[] }
                         <div className="text-sm font-medium text-gold">{processo.numero || 'Sem numero'}</div>
                         <div className="mt-0.5 text-xs text-muted-foreground">{processo.cliente.nomeCompleto}</div>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 hidden sm:table-cell">
                         {processo.areaJuridica ? (
                           <span className="rounded-full bg-info-bg px-2.5 py-1 text-xs font-medium text-info">
                             {areaLabels[processo.areaJuridica]}
@@ -207,14 +207,14 @@ export default function ProcessosClient({ processos }: { processos: Processo[] }
                           '-'
                         )}
                       </td>
-                      <td className="px-5 py-3 text-sm text-muted-foreground">{processo.tribunal || '-'}</td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 text-sm text-muted-foreground hidden lg:table-cell">{processo.tribunal || '-'}</td>
+                      <td className="px-5 py-3 hidden md:table-cell">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${fase.color}`}>{fase.label}</span>
                       </td>
                       <td className="px-5 py-3">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}>{status.label}</span>
                       </td>
-                      <td className="px-5 py-3 text-sm text-muted-foreground">{processo.responsavel?.nome || '-'}</td>
+                      <td className="px-5 py-3 text-sm text-muted-foreground hidden lg:table-cell">{processo.responsavel?.nome || '-'}</td>
                       <td className="px-5 py-3">
                         <Link
                           href={`/processos/${processo.id}`}

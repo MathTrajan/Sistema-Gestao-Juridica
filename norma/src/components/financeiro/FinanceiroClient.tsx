@@ -26,14 +26,14 @@ interface Props {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  PENDENTE: { label: 'Pendente', color: 'bg-amber-100 text-amber-800' },
-  PAGO: { label: 'Pago', color: 'bg-green-100 text-green-800' },
-  ATRASADO: { label: 'Atrasado', color: 'bg-red-100 text-red-800' },
-  CANCELADO: { label: 'Cancelado', color: 'bg-gray-100 text-gray-500' },
+  PENDENTE: { label: 'Pendente', color: 'bg-warning-bg text-warning' },
+  PAGO: { label: 'Pago', color: 'bg-success-bg text-success' },
+  ATRASADO: { label: 'Atrasado', color: 'bg-danger-bg text-danger' },
+  CANCELADO: { label: 'Cancelado', color: 'bg-white/8 text-muted-foreground' },
 }
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/8"
+const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
 
 function mesAnoLabel(isoDate: string): string {
   const d = new Date(isoDate)
@@ -303,50 +303,49 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
   return (
     <>
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-5 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="w-8 h-8 bg-green-50 text-green-700 rounded-lg flex items-center justify-center mb-3">
+      <div className="grid grid-cols-2 gap-4 mb-8 xl:grid-cols-4">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: 'rgba(34,197,94,0.12)', color: '#4ade80' }}>
             <TrendingUp size={16} />
           </div>
-          <div className="text-2xl font-bold text-green-700">{fmt(totalEntradas)}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Receitas pagas</div>
+          <div className="text-2xl font-bold text-success">{fmt(totalEntradas)}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Receitas pagas</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="w-8 h-8 bg-red-50 text-red-700 rounded-lg flex items-center justify-center mb-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171' }}>
             <TrendingDown size={16} />
           </div>
-          <div className="text-2xl font-bold text-red-700">{fmt(totalSaidas)}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Despesas pagas</div>
+          <div className="text-2xl font-bold text-danger">{fmt(totalSaidas)}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Despesas pagas</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="w-8 h-8 bg-blue-50 text-blue-700 rounded-lg flex items-center justify-center mb-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa' }}>
             <DollarSign size={16} />
           </div>
-          <div className="text-2xl font-bold text-blue-700">{fmt(aReceber)}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">A receber</div>
+          <div className="text-2xl font-bold text-info">{fmt(aReceber)}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">A receber</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="w-8 h-8 bg-amber-50 text-amber-700 rounded-lg flex items-center justify-center mb-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24' }}>
             <AlertCircle size={16} />
           </div>
-          <div className="text-2xl font-bold text-amber-700">{fmt(inadimplencia)}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Inadimplência</div>
+          <div className="text-2xl font-bold text-warning">{fmt(inadimplencia)}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Inadimplência</div>
         </div>
       </div>
 
       {/* Tabela */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
+      <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-1">
             {(['TODOS', 'ENTRADA', 'SAIDA'] as const).map(f => (
               <button
                 key={f}
                 onClick={() => setFiltro(f)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  filtro === f
-                    ? 'bg-green-800 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  filtro === f ? 'text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
                 }`}
+                style={filtro === f ? { background: 'linear-gradient(135deg,#B8962A,#E4C874)' } : {}}
               >
                 {f === 'TODOS' ? 'Todos' : f === 'ENTRADA' ? 'Receitas' : 'Despesas'}
               </button>
@@ -354,7 +353,8 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
           </div>
           <button
             onClick={abrirModalNovo}
-            className="flex items-center gap-2 bg-green-800 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-90 text-black"
+            style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}
           >
             <Plus size={14} />
             Novo Lançamento
@@ -363,128 +363,126 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
 
         {filtrados.length === 0 ? (
           <div className="p-16 text-center">
-            <div className="text-gray-300 text-5xl mb-4">💰</div>
-            <div className="text-gray-500 font-medium">Nenhum lançamento</div>
-            <div className="text-gray-400 text-sm mt-1">Clique em &quot;Novo Lançamento&quot; para começar</div>
+            <div className="text-4xl mb-4">💰</div>
+            <div className="text-foreground font-medium">Nenhum lançamento</div>
+            <div className="text-muted-foreground text-sm mt-1">Clique em &quot;Novo Lançamento&quot; para começar</div>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Descrição</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Tipo</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Cliente</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Valor</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Vencimento</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grupos.map(grupo => (
-                <>
-                  {/* Month group header */}
-                  <tr key={`header-${grupo.key}`} className="sticky top-0 z-10">
-                    <td
-                      colSpan={7}
-                      className="px-5 py-2 text-xs font-semibold uppercase tracking-widest"
-                      style={{ backgroundColor: '#f0fdf4', color: '#166534', borderTop: '1px solid #dcfce7', borderBottom: '1px solid #dcfce7' }}
-                    >
-                      {grupo.label.charAt(0).toUpperCase() + grupo.label.slice(1)}
-                    </td>
-                  </tr>
-
-                  {/* Rows for this month */}
-                  {grupo.items.map(l => {
-                    const status = statusConfig[l.status] ?? { label: l.status, color: 'bg-gray-100 text-gray-500' }
-                    const vencido = l.status === 'PENDENTE' && new Date(l.dataVencimento) < new Date()
-                    const confirmando = !!confirmandoDeletar[l.id]
-
-                    return (
-                      <tr
-                        key={l.id}
-                        className={`border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${vencido ? 'bg-red-50' : ''}`}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/3">
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Descrição</th>
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden sm:table-cell">Tipo</th>
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden lg:table-cell">Cliente</th>
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Valor</th>
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden md:table-cell">Vencimento</th>
+                  <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em]">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grupos.map(grupo => (
+                  <>
+                    <tr key={`header-${grupo.key}`} className="sticky top-0 z-10">
+                      <td
+                        colSpan={7}
+                        className="px-5 py-2 text-xs font-semibold uppercase tracking-widest text-gold"
+                        style={{ background: 'rgba(184,150,42,0.06)', borderTop: '1px solid rgba(184,150,42,0.12)', borderBottom: '1px solid rgba(184,150,42,0.12)' }}
                       >
-                        <td className="px-5 py-3">
-                          <div className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
-                            {l.descricao}
-                            {l.recorrente && (
-                              <span className="text-xs text-blue-500 font-normal" title="Recorrente">
-                                ↻
-                              </span>
-                            )}
-                          </div>
-                          {l.categoria && <div className="text-xs text-gray-400">{l.categoria}</div>}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${l.tipo === 'ENTRADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {l.tipo === 'ENTRADA' ? 'Receita' : 'Despesa'}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-sm text-gray-600">
-                          {l.cliente?.nomeCompleto || '—'}
-                        </td>
-                        <td className={`px-5 py-3 text-sm font-bold ${l.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'}`}>
-                          {l.tipo === 'ENTRADA' ? '+' : '-'}{fmt(l.valor)}
-                        </td>
-                        <td className={`px-5 py-3 text-sm ${vencido ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
-                          {new Date(l.dataVencimento).toLocaleDateString('pt-BR')}
-                          {vencido && ' ⚠️'}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${status.color}`}>
-                            {status.label}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            {l.status === 'PENDENTE' && (
+                        {grupo.label.charAt(0).toUpperCase() + grupo.label.slice(1)}
+                      </td>
+                    </tr>
+
+                    {grupo.items.map(l => {
+                      const status = statusConfig[l.status] ?? { label: l.status, color: 'bg-white/8 text-muted-foreground' }
+                      const vencido = l.status === 'PENDENTE' && new Date(l.dataVencimento) < new Date()
+                      const confirmando = !!confirmandoDeletar[l.id]
+
+                      return (
+                        <tr
+                          key={l.id}
+                          className={`border-b border-white/6 transition-colors hover:bg-white/4 ${vencido ? 'bg-danger-bg' : ''}`}
+                        >
+                          <td className="px-5 py-3">
+                            <div className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                              {l.descricao}
+                              {l.recorrente && (
+                                <span className="text-xs text-info font-normal" title="Recorrente">↻</span>
+                              )}
+                            </div>
+                            {l.categoria && <div className="text-xs text-muted-foreground">{l.categoria}</div>}
+                          </td>
+                          <td className="px-5 py-3 hidden sm:table-cell">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${l.tipo === 'ENTRADA' ? 'bg-success-bg text-success' : 'bg-danger-bg text-danger'}`}>
+                              {l.tipo === 'ENTRADA' ? 'Receita' : 'Despesa'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-sm text-muted-foreground hidden lg:table-cell">
+                            {l.cliente?.nomeCompleto || '—'}
+                          </td>
+                          <td className={`px-5 py-3 text-sm font-bold ${l.tipo === 'ENTRADA' ? 'text-success' : 'text-danger'}`}>
+                            {l.tipo === 'ENTRADA' ? '+' : '-'}{fmt(l.valor)}
+                          </td>
+                          <td className={`px-5 py-3 text-sm hidden md:table-cell ${vencido ? 'text-danger font-medium' : 'text-muted-foreground'}`}>
+                            {new Date(l.dataVencimento).toLocaleDateString('pt-BR')}
+                            {vencido && ' ⚠️'}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <div className="flex items-center justify-end gap-2">
+                              {l.status === 'PENDENTE' && (
+                                <button
+                                  onClick={() => marcarPago(l.id)}
+                                  className="text-xs text-success hover:underline font-medium whitespace-nowrap"
+                                >
+                                  Marcar pago
+                                </button>
+                              )}
                               <button
-                                onClick={() => marcarPago(l.id)}
-                                className="text-xs text-green-700 hover:underline font-medium whitespace-nowrap"
+                                onClick={() => abrirModalEditar(l)}
+                                title="Editar"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/8 transition-colors"
                               >
-                                Marcar pago
+                                <Pencil size={14} />
                               </button>
-                            )}
-                            <button
-                              onClick={() => abrirModalEditar(l)}
-                              title="Editar"
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeletar(l.id)}
-                              title={confirmando ? 'Clique para confirmar exclusão' : 'Excluir'}
-                              className={`p-1.5 rounded-lg transition-colors text-xs font-medium ${
-                                confirmando
-                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 px-2'
-                                  : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                              }`}
-                            >
-                              {confirmando ? 'Confirmar?' : <Trash2 size={14} />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </>
-              ))}
-            </tbody>
-          </table>
+                              <button
+                                onClick={() => handleDeletar(l.id)}
+                                title={confirmando ? 'Clique para confirmar exclusão' : 'Excluir'}
+                                className={`p-1.5 rounded-lg transition-colors text-xs font-medium ${
+                                  confirmando
+                                    ? 'bg-danger-bg text-danger px-2'
+                                    : 'text-muted-foreground hover:text-danger hover:bg-danger-bg'
+                                }`}
+                              >
+                                {confirmando ? 'Confirmar?' : <Trash2 size={14} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Modal */}
       {modalAberto && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
-              <h2 className="text-base font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)' }}>
+          <div className="rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ background: '#161616', boxShadow: '0 25px 80px rgba(0,0,0,0.65)' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0" style={{ background: '#161616' }}>
+              <h2 className="text-base font-semibold text-foreground">
                 {editandoId ? 'Editar Lançamento' : 'Novo Lançamento'}
               </h2>
-              <button onClick={fecharModal} className="text-gray-400 hover:text-gray-600">
+              <button onClick={fecharModal} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -546,23 +544,24 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
                       name="recorrente"
                       checked={form.recorrente}
                       onChange={handleChange}
-                      className="w-4 h-4 rounded border-gray-300 text-green-700 focus:ring-green-600 accent-green-700"
+                      className="w-4 h-4 rounded cursor-pointer accent-[#B8962A]"
                     />
-                    <span className="text-sm text-gray-700 font-medium">Lançamento recorrente</span>
-                    <span className="text-xs text-gray-400">(cria próximo mês automaticamente ao marcar como pago)</span>
+                    <span className="text-sm text-foreground font-medium">Lançamento recorrente</span>
+                    <span className="text-xs text-muted-foreground">(cria próximo mês automaticamente ao marcar como pago)</span>
                   </label>
                 </div>
               </div>
 
               {erro && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">{erro}</div>
+                <div className="rounded-lg border border-danger/20 bg-danger-bg text-danger text-sm px-4 py-3 mt-4">{erro}</div>
               )}
 
               <div className="flex gap-3 mt-6">
-                <button type="button" onClick={fecharModal} className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button type="button" onClick={fecharModal} className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-white/10 text-foreground hover:bg-white/8 transition-colors">
                   Cancelar
                 </button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 text-black"
+                  style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}>
                   {loading ? 'Salvando...' : editandoId ? 'Salvar Alterações' : 'Salvar'}
                 </button>
               </div>

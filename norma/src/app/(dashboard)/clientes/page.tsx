@@ -105,14 +105,14 @@ export default async function ClientesPage({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px]">
+              <table className="w-full min-w-[520px]">
                 <thead>
                   <tr className="border-b border-white/10 bg-white/3">
                     <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Nome</th>
-                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Documento</th>
-                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Contato</th>
-                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Area</th>
-                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Processos</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden lg:table-cell">Documento</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden lg:table-cell">Contato</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden sm:table-cell">Area</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground hidden md:table-cell">Processos</th>
                     <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Status</th>
                     <th className="px-5 py-4" />
                   </tr>
@@ -130,12 +130,12 @@ export default async function ClientesPage({
                             {cliente.tipo === 'PESSOA_FISICA' ? 'Pessoa fisica' : 'Pessoa juridica'}
                           </div>
                         </td>
-                        <td className="px-5 py-3 text-sm text-slate-300">{doc ? formatDocumento(doc) : '-'}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 text-sm text-slate-300 hidden lg:table-cell">{doc ? formatDocumento(doc) : '-'}</td>
+                        <td className="px-5 py-3 hidden lg:table-cell">
                           <div className="text-sm text-slate-200">{cliente.telefone ? formatTelefone(cliente.telefone) : '-'}</div>
                           <div className="text-xs text-muted-foreground">{cliente.email || 'Sem email'}</div>
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3 hidden sm:table-cell">
                           {cliente.areaJuridica ? (
                             <span className="rounded-full bg-info-bg px-2.5 py-1 text-xs font-medium text-info">
                               {areaLabels[cliente.areaJuridica]}
@@ -144,7 +144,7 @@ export default async function ClientesPage({
                             '-'
                           )}
                         </td>
-                        <td className="px-5 py-3 text-sm font-semibold text-foreground">{cliente._count.processos}</td>
+                        <td className="px-5 py-3 text-sm font-semibold text-foreground hidden md:table-cell">{cliente._count.processos}</td>
                         <td className="px-5 py-3">
                           <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}>{status.label}</span>
                         </td>

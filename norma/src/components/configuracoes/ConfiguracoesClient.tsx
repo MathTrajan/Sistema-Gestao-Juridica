@@ -17,9 +17,9 @@ interface Escritorio {
   updatedAt: string
 }
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
-const sectionClass = "bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5"
+const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
+const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
+const sectionClass = "rounded-xl border border-white/10 bg-white/5 p-6 mb-5"
 
 export default function ConfiguracoesClient({ escritorio }: { escritorio: Escritorio | null }) {
   const router = useRouter()
@@ -78,8 +78,8 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
         {/* Dados do Escritório */}
         <div className={sectionClass}>
           <div className="flex items-center gap-2 mb-5">
-            <Building2 size={16} className="text-gray-500" />
-            <h2 className="text-sm font-semibold text-gray-700">Dados do Escritório</h2>
+            <Building2 size={16} className="text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Dados do Escritório</h2>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -110,12 +110,12 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
         </div>
 
         {sucesso && (
-          <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 text-emerald-400 text-sm px-4 py-3 mb-4">
             ✓ Dados salvos com sucesso!
           </div>
         )}
         {erro && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3 mb-4">
             {erro}
           </div>
         )}
@@ -123,7 +123,8 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center gap-2 bg-green-800 hover:bg-green-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50 mb-8"
+          className="flex items-center gap-2 text-black text-sm font-semibold px-5 py-2 rounded-lg transition-all disabled:opacity-50 mb-8 hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
         >
           <Save size={14} />
           {loading ? 'Salvando...' : 'Salvar Alterações'}
@@ -133,8 +134,8 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
       {/* Plano */}
       <div className={sectionClass}>
         <div className="flex items-center gap-2 mb-5">
-          <Shield size={16} className="text-gray-500" />
-          <h2 className="text-sm font-semibold text-gray-700">Plano Atual</h2>
+          <Shield size={16} className="text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Plano Atual</h2>
         </div>
         <div className="bg-[#1a3a2a] rounded-xl p-5 text-white">
           <div className="text-xs opacity-60 mb-1 uppercase tracking-wide">Plano ativo</div>
@@ -154,8 +155,8 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
       {/* Notificações */}
       <div className={sectionClass}>
         <div className="flex items-center gap-2 mb-5">
-          <Bell size={16} className="text-gray-500" />
-          <h2 className="text-sm font-semibold text-gray-700">Notificações</h2>
+          <Bell size={16} className="text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Notificações</h2>
         </div>
         <div className="flex flex-col gap-4">
           {[
@@ -167,13 +168,13 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
           ].map((item, i) => (
             <label key={i} className="flex items-center justify-between cursor-pointer gap-4">
               <div>
-                <div className="text-sm font-medium text-gray-900">{item.label}</div>
-                <div className="text-xs text-gray-400">{item.sub}</div>
+                <div className="text-sm font-medium text-foreground">{item.label}</div>
+                <div className="text-xs text-muted-foreground">{item.sub}</div>
               </div>
               <input
                 type="checkbox"
                 defaultChecked={i < 4}
-                className="w-4 h-4 accent-green-700 flex-shrink-0"
+                className="w-4 h-4 accent-[#B8962A] flex-shrink-0"
               />
             </label>
           ))}
@@ -181,16 +182,16 @@ export default function ConfiguracoesClient({ escritorio }: { escritorio: Escrit
       </div>
 
       {/* Info sistema */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Informações do Sistema</h2>
+      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <h2 className="text-sm font-semibold text-foreground mb-3">Informações do Sistema</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <span className="text-gray-500">Criado em: </span>
-            <span className="text-gray-800">{escritorio ? new Date(escritorio.createdAt).toLocaleDateString('pt-BR') : '—'}</span>
+            <span className="text-muted-foreground">Criado em: </span>
+            <span className="text-foreground">{escritorio ? new Date(escritorio.createdAt).toLocaleDateString('pt-BR') : '—'}</span>
           </div>
           <div>
-            <span className="text-gray-500">Última atualização: </span>
-            <span className="text-gray-800">{escritorio ? new Date(escritorio.updatedAt).toLocaleDateString('pt-BR') : '—'}</span>
+            <span className="text-muted-foreground">Última atualização: </span>
+            <span className="text-foreground">{escritorio ? new Date(escritorio.updatedAt).toLocaleDateString('pt-BR') : '—'}</span>
           </div>
         </div>
       </div>
