@@ -23,6 +23,7 @@ norma/next-env.d.ts
 # Claude Code internal files
 norma/CLAUDE.md
 norma/AGENTS.md
+.claude/
 
 # Logs
 *.log
