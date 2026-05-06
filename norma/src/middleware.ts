@@ -49,32 +49,25 @@ if (typeof setInterval !== 'undefined') {
   }, RATE_LIMIT_WINDOW_MS * 2)
 }
 
-// Rotas acessíveis por COLABORADOR de cada área
-const AREA_ROUTES: Record<string, string[]> = {
-  JURIDICO:       ['/dashboard', '/clientes', '/processos', '/tarefas', '/prazos'],
-  COMERCIAL:      ['/dashboard', '/clientes', '/comercial'],
-  FINANCEIRO:     ['/dashboard', '/financeiro'],
-  CONTROLADORIA:  ['/dashboard', '/controladoria'],
-  MARKETING:      ['/dashboard', '/marketing'],
-}
-
 // Rotas bloqueadas para GERENTE
 const GERENTE_BLOQUEADAS = ['/configuracoes']
 
 function checkRouteAccess(
   perfil: string,
-  area: string | null | undefined,
+  permissoes: string[],
   pathname: string
 ): boolean {
+  // Admin: acesso total
   if (perfil === 'GESTOR_GERAL') return true
 
+  // Gerente: tudo exceto configurações
   if (perfil === 'GERENTE') {
     return !GERENTE_BLOQUEADAS.some(r => pathname === r || pathname.startsWith(r + '/'))
   }
 
-  // COLABORADOR: somente as rotas da sua área
-  const allowed = area ? (AREA_ROUTES[area] ?? ['/dashboard']) : ['/dashboard']
-  return allowed.some(r => pathname === r || pathname.startsWith(r + '/'))
+  // Colaborador: somente as rotas em permissoes
+  if (permissoes.length === 0) return pathname === '/dashboard'
+  return permissoes.some(r => pathname === r || pathname.startsWith(r + '/'))
 }
 
 export default auth((req) => {
@@ -108,9 +101,9 @@ export default auth((req) => {
   if (!pathname.startsWith('/api/')) {
     const token = req.auth as any
     const perfil = token?.user?.perfil as string | undefined
-    const area = token?.user?.area as string | null | undefined
+    const permissoes = (token?.user?.permissoes as string[]) ?? []
 
-    if (perfil && !checkRouteAccess(perfil, area, pathname)) {
+    if (perfil && !checkRouteAccess(perfil, permissoes, pathname)) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }

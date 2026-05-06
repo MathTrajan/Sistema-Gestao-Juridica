@@ -39,6 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           perfil: usuario.perfil,
           escritorioId: usuario.escritorioId,
           area: usuario.area ?? null,
+          permissoes: usuario.permissoes ?? [],
         }
       },
     }),

@@ -25,6 +25,7 @@ export async function GET() {
         oab: true,
         telefone: true,
         ativo: true,
+        permissoes: true,
         createdAt: true,
       },
     })
@@ -65,6 +66,10 @@ export async function POST(req: Request) {
 
     const senhaHash = await bcrypt.hash(body.senha, 10)
 
+    const permissoes = Array.isArray(body.permissoes)
+      ? body.permissoes.filter((p: unknown) => typeof p === 'string')
+      : []
+
     const usuario = await prisma.usuario.create({
       data: {
         nome: String(body.nome).trim(),
@@ -74,6 +79,7 @@ export async function POST(req: Request) {
         area: AREAS_USUARIO.includes(body.area) ? body.area : null,
         oab: body.oab ? String(body.oab).trim() : null,
         telefone: body.telefone ? String(body.telefone).trim() : null,
+        permissoes,
         escritorioId,
       },
       select: {
@@ -82,6 +88,7 @@ export async function POST(req: Request) {
         email: true,
         perfil: true,
         area: true,
+        permissoes: true,
         ativo: true,
       },
     })

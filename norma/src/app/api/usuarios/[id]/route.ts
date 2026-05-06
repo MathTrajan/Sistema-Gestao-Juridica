@@ -26,6 +26,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (body.oab !== undefined) data.oab = body.oab ? String(body.oab).trim() : null
     if (body.telefone !== undefined) data.telefone = body.telefone ? String(body.telefone).trim() : null
     if (body.ativo !== undefined) data.ativo = Boolean(body.ativo)
+    if (body.permissoes !== undefined && Array.isArray(body.permissoes)) {
+      data.permissoes = body.permissoes.filter((p: unknown) => typeof p === 'string')
+    }
     if (body.senha && typeof body.senha === 'string' && body.senha.length >= 8) {
       data.senha = await bcrypt.hash(body.senha, 10)
     }
