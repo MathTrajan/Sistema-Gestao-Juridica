@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
-  user: { nome: string; perfil: string } | null
+  user: { nome: string; perfil: string; area?: string | null } | null
   badgeTarefas: number
   badgePrazos: number
 }
@@ -59,6 +59,22 @@ const systemItems = [
   { label: 'Relatórios',     href: '/relatorios',    icon: BarChart2 },
   { label: 'Configurações',  href: '/configuracoes', icon: Settings },
 ]
+
+const AREA_ROUTES: Record<string, string[]> = {
+  JURIDICO:       ['/dashboard', '/clientes', '/processos', '/tarefas', '/prazos'],
+  COMERCIAL:      ['/dashboard', '/clientes', '/comercial'],
+  FINANCEIRO:     ['/dashboard', '/financeiro'],
+  CONTROLADORIA:  ['/dashboard', '/controladoria'],
+  MARKETING:      ['/dashboard', '/marketing'],
+}
+
+function canSee(href: string, perfil: string, area?: string | null): boolean {
+  if (perfil === 'GESTOR_GERAL') return true
+  if (perfil === 'GERENTE') return href !== '/configuracoes'
+  // COLABORADOR
+  const allowed = area ? (AREA_ROUTES[area] ?? ['/dashboard']) : ['/dashboard']
+  return allowed.includes(href)
+}
 
 export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProps) {
   const pathname = usePathname()
@@ -138,43 +154,58 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4">
-        <div className="px-5 mb-1.5">
-          <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">
-            Principal
-          </span>
-        </div>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.href}
-            href={item.href}
-            label={item.label}
-            icon={item.icon}
-            badge={
-              item.href === '/tarefas' ? badgeTarefas
-              : item.href === '/prazos' ? badgePrazos
-              : undefined
-            }
-            badgeRed={item.href === '/prazos'}
-          />
-        ))}
-
-        <div className="px-5 mt-4 mb-1.5">
-          <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">
-            Departamentos
-          </span>
-        </div>
-        {deptItems.map((item) => (
-          <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-        ))}
-
-        <div className="px-5 mt-4 mb-1.5">
-          <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">
-            Sistema
-          </span>
-        </div>
-        {systemItems.map((item) => (
-          <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-        ))}
+        {(() => {
+          const perfil = user?.perfil ?? ''
+          const area = user?.area
+          const visNavItems = navItems.filter(i => canSee(i.href, perfil, area))
+          const visDeptItems = deptItems.filter(i => canSee(i.href, perfil, area))
+          const visSysItems = systemItems.filter(i => canSee(i.href, perfil, area))
+          return (
+            <>
+              {visNavItems.length > 0 && (
+                <>
+                  <div className="px-5 mb-1.5">
+                    <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">Principal</span>
+                  </div>
+                  {visNavItems.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      href={item.href}
+                      label={item.label}
+                      icon={item.icon}
+                      badge={
+                        item.href === '/tarefas' ? badgeTarefas
+                        : item.href === '/prazos' ? badgePrazos
+                        : undefined
+                      }
+                      badgeRed={item.href === '/prazos'}
+                    />
+                  ))}
+                </>
+              )}
+              {visDeptItems.length > 0 && (
+                <>
+                  <div className="px-5 mt-4 mb-1.5">
+                    <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">Departamentos</span>
+                  </div>
+                  {visDeptItems.map((item) => (
+                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+                  ))}
+                </>
+              )}
+              {visSysItems.length > 0 && (
+                <>
+                  <div className="px-5 mt-4 mb-1.5">
+                    <span className="text-white/30 text-[10px] uppercase tracking-widest font-semibold">Sistema</span>
+                  </div>
+                  {visSysItems.map((item) => (
+                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+                  ))}
+                </>
+              )}
+            </>
+          )
+        })()}
       </nav>
 
       {/* Usuário + Logout */}

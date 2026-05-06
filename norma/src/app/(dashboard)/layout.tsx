@@ -32,7 +32,11 @@ export default async function DashboardLayout({
   ])
 
   const user = session.user.name
-    ? { nome: session.user.name, perfil: (session.user as any).perfil ?? '' }
+    ? {
+        nome: session.user.name,
+        perfil: (session.user as any).perfil ?? '',
+        area: (session.user as any).area ?? null,
+      }
     : null
 
   return (

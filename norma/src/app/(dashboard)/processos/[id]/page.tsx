@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Plus } from 'lucide-react'
 import ProcessoEditModal from '@/components/processos/ProcessoEditModal'
+import ProcessoDeleteButton from '@/components/processos/ProcessoDeleteButton'
 
 const areaLabels: Record<string, string> = {
   TRABALHISTA: 'Trabalhista', CIVIL: 'Cível', TRIBUTARIO: 'Tributário',
@@ -103,7 +104,9 @@ export default async function ProcessoDetalhePage({
             </p>
           </div>
         </div>
-        <ProcessoEditModal
+        <div className="flex items-center gap-2">
+          <ProcessoDeleteButton processoId={processo.id} />
+          <ProcessoEditModal
           processoId={processo.id}
           usuarios={usuarios}
           initial={{
@@ -122,6 +125,7 @@ export default async function ProcessoDetalhePage({
             responsavelId: processo.responsavelId,
           }}
         />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
