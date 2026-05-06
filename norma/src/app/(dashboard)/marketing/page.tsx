@@ -71,7 +71,7 @@ export default async function MarketingPage() {
   }
 
   return (
-    <div style={{ padding: '28px' }}>
+    <div className="page-enter" style={{ padding: '28px' }}>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '24px' }}>

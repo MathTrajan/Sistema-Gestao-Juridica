@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
+import { MainWrapper } from '@/components/layout/MainWrapper'
 
 export default async function DashboardLayout({
   children,
@@ -13,40 +14,53 @@ export default async function DashboardLayout({
   const session = await auth()
   if (!session) redirect('/login')
 
-  const escritorioId = (session?.user as any)?.escritorioId
+  const userData = session.user as typeof session.user & {
+    escritorioId?: string
+    perfil?: string
+    area?: string | null
+  }
+  const escritorioId = userData.escritorioId
+  const limitePrazo = new Date()
+  limitePrazo.setHours(limitePrazo.getHours() + 48)
 
   const [badgeTarefas, badgePrazos] = await Promise.all([
-    prisma.tarefa.count({
-      where: {
-        escritorioId,
-        status: { in: ['A_FAZER', 'EM_ANDAMENTO'] },
-      },
-    }),
-    prisma.prazo.count({
-      where: {
-        processo: { escritorioId },
-        status: 'ABERTO',
-        dataFinal: { lte: new Date(Date.now() + 48 * 60 * 60 * 1000) },
-      },
-    }),
+    prisma.tarefa
+      .count({ where: { escritorioId, status: { in: ['A_FAZER', 'EM_ANDAMENTO'] } } })
+      .catch(() => 0),
+    prisma.prazo
+      .count({ where: { processo: { escritorioId }, status: 'ABERTO', dataFinal: { lte: limitePrazo } } })
+      .catch(() => 0),
   ])
 
   const user = session.user.name
-    ? {
-        nome: session.user.name,
-        perfil: (session.user as any).perfil ?? '',
-        area: (session.user as any).area ?? null,
-      }
+    ? { nome: session.user.name, perfil: userData.perfil ?? '', area: userData.area ?? null }
     : null
 
   return (
     <SidebarProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      <div className="relative flex min-h-screen" style={{ background: '#0D0D0D' }}>
+
+        {/* Padrão de pontos sutil */}
+        <div
+          className="pointer-events-none fixed inset-0 opacity-40"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(184,150,42,0.06) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+
+        {/* Orbe dourado sutil */}
+        <div
+          className="pointer-events-none fixed bottom-0 right-0 h-[500px] w-[500px] rounded-full opacity-[0.04] blur-[120px]"
+          style={{ background: 'radial-gradient(circle, #B8962A, transparent)' }}
+        />
+
         <Sidebar user={user} badgeTarefas={badgeTarefas} badgePrazos={badgePrazos} />
-        <main className="flex-1 md:ml-60 ml-0 min-w-0 overflow-x-hidden flex flex-col">
+
+        <MainWrapper>
           <Topbar />
           {children}
-        </main>
+        </MainWrapper>
       </div>
     </SidebarProvider>
   )

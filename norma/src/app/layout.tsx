@@ -1,27 +1,49 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Inter, JetBrains_Mono, Playfair_Display } from 'next/font/google'
+import { Toaster } from 'sonner'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  weight: ['500', '600', '700'],
+})
 
 export const metadata: Metadata = {
-  title: "Norma — Sistema Jurídico",
-  description: "Gestão jurídica completa para escritórios de advocacia",
-};
+  title: 'Norma — Sistema Jurídico',
+  description: 'Sistema de gestão jurídica profissional',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html lang="pt-BR" className={`${inter.variable} ${jetbrains.variable} ${playfair.variable} h-full`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap"
-          rel="stylesheet"
+        {/* Anti-flash: aplica tema antes da hidratação */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('norma_theme');if(t==='light')document.documentElement.classList.add('light');}catch(e){}`,
+          }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full bg-background text-foreground antialiased">
+        {children}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'rgba(15, 15, 15, 0.92)',
+              backdropFilter: 'blur(14px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              color: '#fff',
+            },
+          }}
+        />
+      </body>
     </html>
-  );
+  )
 }

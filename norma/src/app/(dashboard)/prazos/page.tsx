@@ -6,21 +6,24 @@ export const dynamic = 'force-dynamic'
 
 export default async function PrazosPage() {
   const session = await auth()
-  const escritorioId = (session?.user as any)?.escritorioId
+  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const escritorioId = userData?.escritorioId
 
-  const prazosRaw = await prisma.prazo.findMany({
-    where: { processo: { escritorioId } },
-    orderBy: { dataFinal: 'asc' },
-    include: {
-      processo: {
-        select: {
-          id: true,
-          numero: true,
-          cliente: { select: { nomeCompleto: true } },
+  const prazosRaw = await prisma.prazo
+    .findMany({
+      where: { processo: { escritorioId } },
+      orderBy: { dataFinal: 'asc' },
+      include: {
+        processo: {
+          select: {
+            id: true,
+            numero: true,
+            cliente: { select: { nomeCompleto: true } },
+          },
         },
       },
-    },
-  })
+    })
+    .catch(() => [])
 
   const prazos = prazosRaw.map(p => ({
     id: p.id,
@@ -39,7 +42,7 @@ export default async function PrazosPage() {
   }))
 
   return (
-    <div className="p-8">
+    <div className="page-enter px-6 py-8 xl:px-10">
       <PrazosClient prazos={prazos} />
     </div>
   )

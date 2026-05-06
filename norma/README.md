@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Norma
 
-## Getting Started
+Sistema de gestão jurídica construído com Next.js, Prisma e PostgreSQL.
 
-First, run the development server:
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Prisma
+- PostgreSQL
+- NextAuth v5
+- Tailwind CSS 4
+- Framer Motion
+- Recharts
+- Zod + React Hook Form
+
+## Funcionalidades
+
+- Dashboard com indicadores
+- Gestão de clientes
+- Gestão de processos
+- Tarefas em Kanban
+- Controle de prazos
+- Financeiro
+- Comercial / CRM
+- Controladoria
+- Relatórios
+- Usuários e permissões
+- Configurações
+
+## Instalação
+
+```bash
+npm install
+```
+
+## Variáveis De Ambiente
+
+Crie `.env` com:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/norma"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/norma"
+NEXTAUTH_SECRET="gere-um-secret-com-pelo-menos-32-caracteres"
+NEXTAUTH_URL="http://localhost:3001"
+NEXT_PUBLIC_SENTRY_DSN=""
+```
+
+## Banco De Dados
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+## Desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplicação local:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `http://localhost:3001`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build
 
-## Learn More
+```bash
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Login Inicial Do Seed
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- E-mail: `admin@escritorio.com`
+- Senha: `123456`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Troque essas credenciais ao usar o sistema fora de ambiente local.
 
-## Deploy on Vercel
+## Estrutura
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+norma/
+├─ prisma/
+├─ public/
+├─ src/
+│  ├─ app/
+│  ├─ components/
+│  ├─ lib/
+│  └─ types/
+├─ package.json
+└─ next.config.ts
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Observações
+
+- O projeto usa autenticação com credenciais e sessão JWT
+- O middleware aplica proteção de rotas e controle básico de rate limit
+- `DIRECT_URL` também é esperada pelo Prisma no schema atual
+- O seed é somente para desenvolvimento
+

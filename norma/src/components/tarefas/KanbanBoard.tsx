@@ -1,22 +1,23 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Pencil, X, Calendar, Search, Link2 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Pencil, X, Calendar, Search, Link2, LayoutGrid, AlertTriangle } from 'lucide-react'
 
 const colunas = [
-  { id: 'A_FAZER', label: 'A Fazer', color: 'bg-gray-100 border-gray-200' },
-  { id: 'EM_ANDAMENTO', label: 'Em Andamento', color: 'bg-blue-50 border-blue-200' },
-  { id: 'AGUARDANDO_REVISAO', label: 'Aguardando Revisão', color: 'bg-amber-50 border-amber-200' },
-  { id: 'CONCLUIDO', label: 'Concluído', color: 'bg-green-50 border-green-200' },
+  { id: 'A_FAZER', label: 'A Fazer', color: 'from-white/8 to-white/4', accent: 'text-muted-foreground' },
+  { id: 'EM_ANDAMENTO', label: 'Em Andamento', color: 'from-info/18 to-info/5', accent: 'text-info' },
+  { id: 'AGUARDANDO_REVISAO', label: 'Aguardando Revisao', color: 'from-warning/18 to-warning/5', accent: 'text-warning' },
+  { id: 'CONCLUIDO', label: 'Concluido', color: 'from-success/18 to-success/5', accent: 'text-success' },
 ]
 
 const prioridadeConfig: Record<string, { label: string; color: string }> = {
-  URGENTE: { label: 'Urgente', color: 'bg-red-100 text-red-800' },
-  ALTA: { label: 'Alta', color: 'bg-amber-100 text-amber-800' },
-  NORMAL: { label: 'Normal', color: 'bg-gray-100 text-gray-600' },
-  BAIXA: { label: 'Baixa', color: 'bg-blue-100 text-blue-800' },
+  URGENTE: { label: 'Urgente', color: 'bg-danger-bg text-danger' },
+  ALTA: { label: 'Alta', color: 'bg-warning-bg text-warning' },
+  NORMAL: { label: 'Normal', color: 'bg-white/8 text-muted-foreground' },
+  BAIXA: { label: 'Baixa', color: 'bg-info-bg text-info' },
 }
 
 interface Tarefa {
@@ -39,8 +40,8 @@ interface PrazoOpcao {
   status: string
 }
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const inputClass = 'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-gold/30'
+const labelClass = 'mb-1 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground'
 
 export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tarefa[] }) {
   const router = useRouter()
@@ -55,38 +56,43 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
   const [editErro, setEditErro] = useState('')
   const [prazosDisponiveis, setPrazosDisponiveis] = useState<PrazoOpcao[]>([])
   const [editForm, setEditForm] = useState({
-    titulo: '', descricao: '', prioridade: 'NORMAL', status: 'A_FAZER', dataVencimento: '', prazoId: '',
+    titulo: '',
+    descricao: '',
+    prioridade: 'NORMAL',
+    status: 'A_FAZER',
+    dataVencimento: '',
+    prazoId: '',
   })
   const dragItem = useRef<string | null>(null)
   const statusAnterior = useRef<string | null>(null)
 
-  // Busca prazos quando processo estiver definido na tarefa em edição
   useEffect(() => {
     if (!editando?.processo?.id) {
       setPrazosDisponiveis([])
       return
     }
+
     fetch(`/api/prazos?processoId=${editando.processo.id}`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((data: PrazoOpcao[]) => setPrazosDisponiveis(Array.isArray(data) ? data : []))
       .catch(() => setPrazosDisponiveis([]))
   }, [editando?.processo?.id])
 
-  function abrirEditar(t: Tarefa) {
+  function abrirEditar(tarefa: Tarefa) {
     setEditForm({
-      titulo: t.titulo,
-      descricao: t.descricao ?? '',
-      prioridade: t.prioridade,
-      status: t.status,
-      dataVencimento: t.dataVencimento ? t.dataVencimento.slice(0, 10) : '',
-      prazoId: t.prazoId ?? '',
+      titulo: tarefa.titulo,
+      descricao: tarefa.descricao ?? '',
+      prioridade: tarefa.prioridade,
+      status: tarefa.status,
+      dataVencimento: tarefa.dataVencimento ? tarefa.dataVencimento.slice(0, 10) : '',
+      prazoId: tarefa.prazoId ?? '',
     })
-    setEditando(t)
+    setEditando(tarefa)
     setEditErro('')
   }
 
   function handleEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    setEditForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setEditForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   async function handleEditSalvar(e: React.FormEvent) {
@@ -94,6 +100,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
     if (!editando) return
     setEditLoading(true)
     setEditErro('')
+
     try {
       const res = await fetch(`/api/tarefas/${editando.id}`, {
         method: 'PUT',
@@ -107,22 +114,28 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
           prazoId: editForm.prazoId || null,
         }),
       })
+
       if (!res.ok) throw new Error()
-      const prazoSelecionado = prazosDisponiveis.find(p => p.id === editForm.prazoId) ?? null
-      setTarefas(prev => prev.map(t =>
-        t.id === editando.id
-          ? {
-              ...t,
-              titulo: editForm.titulo,
-              descricao: editForm.descricao || null,
-              prioridade: editForm.prioridade,
-              status: editForm.status,
-              dataVencimento: editForm.dataVencimento ? new Date(editForm.dataVencimento).toISOString() : null,
-              prazoId: editForm.prazoId || null,
-              prazo: prazoSelecionado ? { id: prazoSelecionado.id, titulo: prazoSelecionado.titulo } : null,
-            }
-          : t
-      ))
+
+      const prazoSelecionado = prazosDisponiveis.find((prazo) => prazo.id === editForm.prazoId) ?? null
+
+      setTarefas((prev) =>
+        prev.map((tarefa) =>
+          tarefa.id === editando.id
+            ? {
+                ...tarefa,
+                titulo: editForm.titulo,
+                descricao: editForm.descricao || null,
+                prioridade: editForm.prioridade,
+                status: editForm.status,
+                dataVencimento: editForm.dataVencimento ? new Date(editForm.dataVencimento).toISOString() : null,
+                prazoId: editForm.prazoId || null,
+                prazo: prazoSelecionado ? { id: prazoSelecionado.id, titulo: prazoSelecionado.titulo } : null,
+              }
+            : tarefa
+        )
+      )
+
       setEditando(null)
       router.refresh()
     } catch {
@@ -135,7 +148,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
   function handleDragStart(id: string) {
     dragItem.current = id
     setDraggingId(id)
-    const tarefa = tarefas.find(t => t.id === id)
+    const tarefa = tarefas.find((item) => item.id === id)
     statusAnterior.current = tarefa?.status ?? null
   }
 
@@ -162,10 +175,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
 
     if (!id || !anterior || anterior === colunaId) return
 
-    setTarefas(prev =>
-      prev.map(t => t.id === id ? { ...t, status: colunaId } : t)
-    )
-
+    setTarefas((prev) => prev.map((tarefa) => (tarefa.id === id ? { ...tarefa, status: colunaId } : tarefa)))
     setSalvando(id)
 
     try {
@@ -174,141 +184,179 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: colunaId }),
       })
+
       if (!res.ok) throw new Error()
     } catch {
-      setTarefas(prev =>
-        prev.map(t => t.id === id ? { ...t, status: anterior } : t)
-      )
+      setTarefas((prev) => prev.map((tarefa) => (tarefa.id === id ? { ...tarefa, status: anterior } : tarefa)))
     } finally {
       setSalvando(null)
     }
   }
 
-  // Filtra tarefas pela busca (título, descrição, responsável, processo)
-  const tarefasFiltradas = busca.trim()
-    ? tarefas.filter(t => {
-        const q = busca.toLowerCase()
-        return (
-          t.titulo.toLowerCase().includes(q) ||
-          t.descricao?.toLowerCase().includes(q) ||
-          t.responsavel?.nome.toLowerCase().includes(q) ||
-          t.processo?.numero?.toLowerCase().includes(q) ||
-          t.prazo?.titulo.toLowerCase().includes(q)
-        )
-      })
-    : tarefas
+  const normalizedBusca = busca.trim().toLowerCase()
 
-  const tarefasComPrazo = tarefasFiltradas
-    .filter(t => t.dataVencimento && t.status !== 'CONCLUIDO')
-    .sort((a, b) => new Date(a.dataVencimento!).getTime() - new Date(b.dataVencimento!).getTime())
+  const tarefasFiltradas = useMemo(() => (
+    normalizedBusca
+      ? tarefas.filter((tarefa) => (
+          tarefa.titulo.toLowerCase().includes(normalizedBusca) ||
+          tarefa.descricao?.toLowerCase().includes(normalizedBusca) ||
+          tarefa.responsavel?.nome.toLowerCase().includes(normalizedBusca) ||
+          tarefa.processo?.numero?.toLowerCase().includes(normalizedBusca) ||
+          tarefa.prazo?.titulo.toLowerCase().includes(normalizedBusca)
+        ))
+      : tarefas
+  ), [normalizedBusca, tarefas])
+
+  const tarefasComPrazo = useMemo(() => (
+    tarefasFiltradas
+      .filter((tarefa) => tarefa.dataVencimento && tarefa.status !== 'CONCLUIDO')
+      .sort((a, b) => new Date(a.dataVencimento!).getTime() - new Date(b.dataVencimento!).getTime())
+  ), [tarefasFiltradas])
+
+  const urgentes = useMemo(
+    () => tarefas.filter((tarefa) => tarefa.prioridade === 'URGENTE' && tarefa.status !== 'CONCLUIDO').length,
+    [tarefas]
+  )
 
   return (
-    <>
-      {/* Busca */}
-      <div className="relative mb-5">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="glass-card rounded-3xl p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/12 text-gold">
+              <LayoutGrid size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-foreground">{tarefas.length}</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Total</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-3xl p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-warning-bg text-warning">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-foreground">{tarefasComPrazo.length}</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Com vencimento</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-3xl p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-danger-bg text-danger">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-foreground">{urgentes}</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Urgentes abertas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative">
+        <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={busca}
-          onChange={e => setBusca(e.target.value)}
-          placeholder="Buscar por título, responsável, processo, prazo..."
-          className="w-full border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por titulo, responsavel, processo, prazo..."
+          className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-gold/35 focus:bg-white/8"
         />
       </div>
 
-      {/* Abas */}
-      <div className="flex gap-1 mb-6">
+      <div className="flex gap-1">
         <button
           onClick={() => setAba('kanban')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-            aba === 'kanban' ? 'bg-green-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors ${
+            aba === 'kanban' ? 'bg-gold text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
           }`}
         >
           Kanban
         </button>
         <button
           onClick={() => setAba('comPrazo')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-            aba === 'comPrazo' ? 'bg-green-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors ${
+            aba === 'comPrazo' ? 'bg-gold text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
           }`}
         >
           <Calendar size={14} />
-          Com Prazo
-          {tarefasComPrazo.length > 0 && (
-            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${aba === 'comPrazo' ? 'bg-white/20' : 'bg-amber-100 text-amber-700'}`}>
+          Com prazo
+          {tarefasComPrazo.length > 0 ? (
+            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${aba === 'comPrazo' ? 'bg-black/15' : 'bg-warning-bg text-warning'}`}>
               {tarefasComPrazo.length}
             </span>
-          )}
+          ) : null}
         </button>
       </div>
 
-      {/* Aba Kanban */}
-      {aba === 'kanban' && (
-        <div className="flex gap-5 overflow-x-auto pb-4 min-h-96">
-          {colunas.map(coluna => {
-            const tarefasColuna = tarefasFiltradas.filter(t => t.status === coluna.id)
+      {aba === 'kanban' ? (
+        <div className="flex min-h-96 gap-5 overflow-x-auto pb-4">
+          {colunas.map((coluna) => {
+            const tarefasColuna = tarefasFiltradas.filter((tarefa) => tarefa.status === coluna.id)
             const isOver = overColuna === coluna.id
 
             return (
-              <div
+              <motion.div
                 key={coluna.id}
-                onDragOver={e => handleDragOver(e, coluna.id)}
+                onDragOver={(e) => handleDragOver(e, coluna.id)}
                 onDrop={() => handleDrop(coluna.id)}
                 onDragLeave={() => setOverColuna(null)}
-                className={`flex-shrink-0 w-72 rounded-xl border-2 p-4 transition-all ${
-                  isOver ? 'border-green-400 bg-green-50 scale-[1.01]' : coluna.color
+                className={`glass-card w-72 flex-shrink-0 rounded-[1.75rem] border p-4 transition-all ${
+                  isOver ? 'border-gold/35 bg-gold/10 scale-[1.01]' : 'border-white/10 bg-transparent'
                 }`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-semibold text-gray-700">{coluna.label}</span>
-                  <span className="text-xs font-semibold bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
-                    {tarefasColuna.length}
-                  </span>
+                <div className={`mb-4 rounded-2xl bg-gradient-to-r ${coluna.color} px-4 py-3`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-semibold ${coluna.accent}`}>{coluna.label}</span>
+                    <span className="rounded-full border border-white/10 bg-black/10 px-2 py-0.5 text-xs font-semibold text-foreground">
+                      {tarefasColuna.length}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-3 min-h-16">
-                  {tarefasColuna.length === 0 && (
-                    <div className={`text-center text-xs py-8 border-2 border-dashed rounded-xl transition-colors ${
-                      isOver ? 'border-green-400 text-green-600' : 'border-gray-200 text-gray-400'
+                <div className="flex min-h-16 flex-col gap-3">
+                  {tarefasColuna.length === 0 ? (
+                    <div className={`rounded-2xl border-2 border-dashed py-8 text-center text-xs transition-colors ${
+                      isOver ? 'border-gold/40 text-gold' : 'border-white/10 text-muted-foreground'
                     }`}>
-                      {isOver ? '↓ Solte aqui' : 'Nenhuma tarefa'}
+                      {isOver ? 'Solte aqui' : 'Nenhuma tarefa'}
                     </div>
-                  )}
+                  ) : null}
 
-                  {tarefasColuna.map(tarefa => {
+                  {tarefasColuna.map((tarefa) => {
                     const prioridade = prioridadeConfig[tarefa.prioridade]
                     const isDragging = draggingId === tarefa.id
                     const isSalvando = salvando === tarefa.id
-                    const vencida =
-                      tarefa.dataVencimento &&
-                      new Date(tarefa.dataVencimento) < new Date() &&
-                      tarefa.status !== 'CONCLUIDO'
+                    const vencida = tarefa.dataVencimento && new Date(tarefa.dataVencimento) < new Date() && tarefa.status !== 'CONCLUIDO'
 
                     return (
-                      <div
+                      <motion.div
                         key={tarefa.id}
                         draggable
                         onDragStart={() => handleDragStart(tarefa.id)}
                         onDragEnd={handleDragEnd}
-                        className={`bg-white border border-gray-200 rounded-xl p-4 shadow-sm select-none transition-all ${
-                          isDragging
-                            ? 'opacity-30 scale-95 cursor-grabbing'
-                            : isSalvando
-                            ? 'opacity-70 cursor-wait'
-                            : 'cursor-grab hover:shadow-md hover:-translate-y-0.5'
+                        className={`glass-card select-none rounded-2xl border border-white/10 p-4 transition-all ${
+                          isDragging ? 'scale-95 cursor-grabbing opacity-30' : isSalvando ? 'cursor-wait opacity-70' : 'cursor-grab hover:-translate-y-0.5'
                         }`}
+                        whileHover={{ y: -2 }}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-sm font-medium text-gray-900 leading-snug">
-                            {tarefa.titulo}
-                          </span>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${prioridade.color}`}>
-                              {prioridade.label}
-                            </span>
+                        <div className="mb-2 flex items-start justify-between gap-2">
+                          <span className="text-sm font-medium leading-snug text-foreground">{tarefa.titulo}</span>
+                          <div className="flex flex-shrink-0 items-center gap-1">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${prioridade.color}`}>{prioridade.label}</span>
                             <button
-                              onMouseDown={e => e.stopPropagation()}
-                              onClick={e => { e.stopPropagation(); abrirEditar(tarefa) }}
-                              className="p-1 rounded text-gray-300 hover:text-green-700 hover:bg-green-50 transition-colors"
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                abrirEditar(tarefa)
+                              }}
+                              className="rounded p-1 text-muted-foreground transition-colors hover:bg-white/8 hover:text-gold"
                               title="Editar"
                             >
                               <Pencil size={12} />
@@ -316,129 +364,129 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                           </div>
                         </div>
 
-                        {tarefa.descricao && (
-                          <p className="text-xs text-gray-400 mb-2 line-clamp-2 leading-relaxed">
-                            {tarefa.descricao}
-                          </p>
-                        )}
+                        {tarefa.descricao ? <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{tarefa.descricao}</p> : null}
 
-                        {tarefa.processo && (
-                          <div className="text-xs mb-1">
+                        {tarefa.processo ? (
+                          <div className="mb-1 text-xs">
                             <Link
                               href={`/processos/${tarefa.processo.id}`}
-                              className="text-green-700 hover:underline"
-                              onClick={e => e.stopPropagation()}
+                              className="text-gold hover:text-gold-light"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              {tarefa.processo.numero || 'Processo sem número'}
+                              {tarefa.processo.numero || 'Processo sem numero'}
                             </Link>
                           </div>
-                        )}
+                        ) : null}
 
-                        {tarefa.prazo && (
-                          <div className="flex items-center gap-1 text-xs text-purple-700 mb-1">
+                        {tarefa.prazo ? (
+                          <div className="mb-1 flex items-center gap-1 text-xs text-info">
                             <Link2 size={10} />
                             <span className="truncate">{tarefa.prazo.titulo}</span>
                           </div>
-                        )}
+                        ) : null}
 
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+                        <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-3">
                           <div className="flex items-center gap-2">
-                            {tarefa.responsavel && (
+                            {tarefa.responsavel ? (
                               <div
-                                className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-xs font-bold text-green-800"
+                                className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-xs font-bold text-black"
                                 title={tarefa.responsavel.nome}
                               >
                                 {tarefa.responsavel.nome.charAt(0).toUpperCase()}
                               </div>
-                            )}
-                            {tarefa.dataVencimento && (
-                              <span className={`text-xs ${vencida ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
+                            ) : null}
+                            {tarefa.dataVencimento ? (
+                              <span className={`text-xs ${vencida ? 'font-medium text-danger' : 'text-muted-foreground'}`}>
                                 {new Date(tarefa.dataVencimento).toLocaleDateString('pt-BR')}
-                                {vencida && ' ⚠️'}
+                                {vencida ? ' !' : ''}
                               </span>
-                            )}
+                            ) : null}
                           </div>
+
                           {isSalvando ? (
-                            <span className="text-xs text-green-600">Salvando...</span>
+                            <span className="text-xs text-gold">Salvando...</span>
                           ) : (
-                            <span className="text-gray-300 text-xs select-none">⠿ arrastar</span>
+                            <span className="select-none text-xs text-muted-foreground">arrastar</span>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     )
                   })}
 
-                  {isOver && tarefasColuna.length > 0 && (
-                    <div className="border-2 border-dashed border-green-300 rounded-xl h-12 flex items-center justify-center text-xs text-green-500">
-                      ↓ Solte aqui
+                  {isOver && tarefasColuna.length > 0 ? (
+                    <div className="flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-gold/35 text-xs text-gold">
+                      Solte aqui
                     </div>
-                  )}
+                  ) : null}
                 </div>
-              </div>
+              </motion.div>
             )
           })}
         </div>
-      )}
-
-      {/* Aba Com Prazo */}
-      {aba === 'comPrazo' && (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      ) : (
+        <div className="glass-card overflow-hidden rounded-3xl border border-white/10">
           {tarefasComPrazo.length === 0 ? (
             <div className="p-16 text-center">
-              <div className="text-gray-300 text-5xl mb-4">📅</div>
-              <div className="text-gray-500 font-medium">Nenhuma tarefa com prazo em aberto</div>
+              <div className="mb-4 text-gold">
+                <Calendar className="mx-auto" size={32} />
+              </div>
+              <div className="font-medium text-foreground">Nenhuma tarefa com prazo em aberto</div>
             </div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Tarefa</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Prioridade</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Status</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Responsável</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Vencimento</th>
-                  <th className="px-5 py-3" />
+                <tr className="border-b border-white/10 bg-white/3">
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Tarefa</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Prioridade</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Status</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Responsavel</th>
+                  <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Vencimento</th>
+                  <th className="px-5 py-4" />
                 </tr>
               </thead>
               <tbody>
-                {tarefasComPrazo.map(t => {
-                  const p = prioridadeConfig[t.prioridade]
-                  const vencida = new Date(t.dataVencimento!) < new Date()
+                {tarefasComPrazo.map((tarefa) => {
+                  const prioridade = prioridadeConfig[tarefa.prioridade]
+                  const vencida = new Date(tarefa.dataVencimento!).getTime() < Date.now()
                   const statusLabel: Record<string, string> = {
-                    A_FAZER: 'A Fazer', EM_ANDAMENTO: 'Em Andamento',
-                    AGUARDANDO_REVISAO: 'Aguard. Revisão', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado',
+                    A_FAZER: 'A Fazer',
+                    EM_ANDAMENTO: 'Em andamento',
+                    AGUARDANDO_REVISAO: 'Aguard. revisao',
+                    CONCLUIDO: 'Concluido',
+                    CANCELADO: 'Cancelado',
                   }
+
                   return (
-                    <tr key={t.id} className={`border-b border-gray-50 last:border-0 transition-colors ${vencida ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                    <tr key={tarefa.id} className={`border-b border-white/6 transition-colors ${vencida ? 'bg-danger/10' : 'hover:bg-white/4'}`}>
                       <td className="px-5 py-3">
-                        <div className="text-sm font-medium text-gray-900">{t.titulo}</div>
-                        {t.processo && (
-                          <div className="text-xs text-gray-400 mt-0.5">
-                            <Link href={`/processos/${t.processo.id}`} className="text-green-700 hover:underline">
-                              {t.processo.numero || 'Processo sem nº'}
+                        <div className="text-sm font-medium text-foreground">{tarefa.titulo}</div>
+                        {tarefa.processo ? (
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            <Link href={`/processos/${tarefa.processo.id}`} className="text-gold hover:text-gold-light">
+                              {tarefa.processo.numero || 'Processo sem n'}
                             </Link>
                           </div>
-                        )}
-                        {t.prazo && (
-                          <div className="flex items-center gap-1 text-xs text-purple-700 mt-0.5">
+                        ) : null}
+                        {tarefa.prazo ? (
+                          <div className="mt-0.5 flex items-center gap-1 text-xs text-info">
                             <Link2 size={10} />
-                            <span>{t.prazo.titulo}</span>
+                            <span>{tarefa.prazo.titulo}</span>
                           </div>
-                        )}
+                        ) : null}
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${p.color}`}>{p.label}</span>
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${prioridade.color}`}>{prioridade.label}</span>
                       </td>
-                      <td className="px-5 py-3 text-sm text-gray-600">{statusLabel[t.status] ?? t.status}</td>
-                      <td className="px-5 py-3 text-sm text-gray-600">{t.responsavel?.nome || '—'}</td>
-                      <td className={`px-5 py-3 text-sm font-medium ${vencida ? 'text-red-700' : 'text-gray-700'}`}>
-                        {new Date(t.dataVencimento!).toLocaleDateString('pt-BR')}
-                        {vencida && ' ⚠️'}
+                      <td className="px-5 py-3 text-sm text-muted-foreground">{statusLabel[tarefa.status] ?? tarefa.status}</td>
+                      <td className="px-5 py-3 text-sm text-muted-foreground">{tarefa.responsavel?.nome || '-'}</td>
+                      <td className={`px-5 py-3 text-sm font-medium ${vencida ? 'text-danger' : 'text-foreground'}`}>
+                        {new Date(tarefa.dataVencimento!).toLocaleDateString('pt-BR')}
+                        {vencida ? ' !' : ''}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <button
-                          onClick={() => abrirEditar(t)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors"
+                          onClick={() => abrirEditar(tarefa)}
+                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-gold"
                           title="Editar"
                         >
                           <Pencil size={14} />
@@ -453,24 +501,24 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
         </div>
       )}
 
-      {/* Modal de edição */}
-      {editando && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">Editar Tarefa</h2>
-              <button onClick={() => setEditando(null)} className="text-gray-400 hover:text-gray-600">
+      {editando ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] border border-white/10 shadow-2xl" style={{ background: 'rgba(18,18,18,0.97)' }}>
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+              <h2 className="text-base font-semibold text-white">Editar tarefa</h2>
+              <button onClick={() => setEditando(null)} className="text-muted-foreground hover:text-white">
                 <X size={18} />
               </button>
             </div>
+
             <form onSubmit={handleEditSalvar} className="p-6">
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className={labelClass}>Título *</label>
+                  <label className={labelClass}>Titulo *</label>
                   <input name="titulo" value={editForm.titulo} onChange={handleEditChange} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Descrição</label>
+                  <label className={labelClass}>Descricao</label>
                   <textarea name="descricao" value={editForm.descricao} onChange={handleEditChange} className={inputClass} rows={2} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -487,47 +535,58 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                     <label className={labelClass}>Status</label>
                     <select name="status" value={editForm.status} onChange={handleEditChange} className={inputClass}>
                       <option value="A_FAZER">A Fazer</option>
-                      <option value="EM_ANDAMENTO">Em Andamento</option>
-                      <option value="AGUARDANDO_REVISAO">Aguard. Revisão</option>
-                      <option value="CONCLUIDO">Concluído</option>
+                      <option value="EM_ANDAMENTO">Em andamento</option>
+                      <option value="AGUARDANDO_REVISAO">Aguard. revisao</option>
+                      <option value="CONCLUIDO">Concluido</option>
                       <option value="CANCELADO">Cancelado</option>
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Data de Vencimento</label>
+                  <label className={labelClass}>Data de vencimento</label>
                   <input type="date" name="dataVencimento" value={editForm.dataVencimento} onChange={handleEditChange} className={inputClass} />
                 </div>
-                {editando.processo && (
+
+                {editando.processo ? (
                   <div>
-                    <label className={labelClass}>Prazo Vinculado</label>
+                    <label className={labelClass}>Prazo vinculado</label>
                     <select name="prazoId" value={editForm.prazoId} onChange={handleEditChange} className={inputClass}>
                       <option value="">Nenhum</option>
-                      {prazosDisponiveis.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.titulo} — {new Date(p.dataFinal).toLocaleDateString('pt-BR')}
+                      {prazosDisponiveis.map((prazo) => (
+                        <option key={prazo.id} value={prazo.id}>
+                          {prazo.titulo} - {new Date(prazo.dataFinal).toLocaleDateString('pt-BR')}
                         </option>
                       ))}
                     </select>
-                    {prazosDisponiveis.length === 0 && (
-                      <p className="text-xs text-gray-400 mt-1">Nenhum prazo cadastrado para este processo.</p>
-                    )}
+                    {prazosDisponiveis.length === 0 ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Nenhum prazo cadastrado para este processo.</p>
+                    ) : null}
                   </div>
-                )}
+                ) : null}
               </div>
-              {editErro && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">{editErro}</div>}
-              <div className="flex gap-3 mt-6">
-                <button type="button" onClick={() => setEditando(null)} className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+
+              {editErro ? <div className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{editErro}</div> : null}
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditando(null)}
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-white/10"
+                >
                   Cancelar
                 </button>
-                <button type="submit" disabled={editLoading} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 rounded-2xl bg-gold px-4 py-2.5 text-sm font-medium text-black hover:bg-gold-light disabled:opacity-50"
+                >
                   {editLoading ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
-    </>
+      ) : null}
+    </div>
   )
 }

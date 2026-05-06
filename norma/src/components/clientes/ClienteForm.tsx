@@ -5,6 +5,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { clienteSchema, type ClienteFormData } from '@/lib/schemas'
 
+const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+const inputErrorClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const sectionClass = "bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5"
+const errMsgClass = "text-xs text-red-600 mt-1"
+
 const areaOptions = [
   { value: 'TRABALHISTA', label: 'Trabalhista' },
   { value: 'CIVIL', label: 'Cível' },
@@ -33,7 +39,7 @@ const estadoOptions = [
   'SP','SE','TO',
 ]
 
-export default function ClienteForm({ clienteId }: { clienteId?: string }) {
+export default function ClienteForm() {
   const router = useRouter()
 
   const {
@@ -98,12 +104,6 @@ export default function ClienteForm({ clienteId }: { clienteId?: string }) {
       setError('root', { message: 'Erro ao salvar. Verifique os dados e tente novamente.' })
     }
   }
-
-  const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-  const inputErrorClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
-  const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
-  const sectionClass = "bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5"
-  const errMsgClass = "text-xs text-red-600 mt-1"
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-3xl">

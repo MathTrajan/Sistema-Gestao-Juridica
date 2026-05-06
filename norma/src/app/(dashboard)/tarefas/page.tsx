@@ -7,17 +7,20 @@ export const fetchCache = 'force-no-store'
 
 export default async function TarefasPage() {
   const session = await auth()
-  const escritorioId = (session?.user as any)?.escritorioId
+  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const escritorioId = userData?.escritorioId
 
-  const tarefasRaw = await prisma.tarefa.findMany({
-    where: { escritorioId },
-    orderBy: [{ prioridade: 'desc' }, { dataVencimento: 'asc' }],
-    include: {
-      responsavel: { select: { id: true, nome: true } },
-      processo: { select: { id: true, numero: true } },
-      prazo: { select: { id: true, titulo: true } },
-    },
-  })
+  const tarefasRaw = await prisma.tarefa
+    .findMany({
+      where: { escritorioId },
+      orderBy: [{ prioridade: 'desc' }, { dataVencimento: 'asc' }],
+      include: {
+        responsavel: { select: { id: true, nome: true } },
+        processo: { select: { id: true, numero: true } },
+        prazo: { select: { id: true, titulo: true } },
+      },
+    })
+    .catch(() => [])
 
   const tarefas = tarefasRaw.map(t => ({
     id: t.id,
@@ -33,7 +36,7 @@ export default async function TarefasPage() {
   }))
 
   return (
-    <div className="p-8">
+    <div className="page-enter px-6 py-8 xl:px-10">
       <KanbanBoard tarefasIniciais={tarefas} />
     </div>
   )
