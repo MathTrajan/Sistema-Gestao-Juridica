@@ -35,6 +35,7 @@ export default async function UsuariosPage() {
       oab: true,
       telefone: true,
       ativo: true,
+      permissoes: true,
       createdAt: true,
     },
   })
@@ -43,6 +44,7 @@ export default async function UsuariosPage() {
     ...u,
     perfil: u.perfil as string,
     area: u.area as string | null,
+    permissoes: u.permissoes as string[],
     createdAt: u.createdAt.toISOString(),
   }))
 

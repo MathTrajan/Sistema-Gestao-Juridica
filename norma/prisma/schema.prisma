@@ -48,9 +48,10 @@ model Usuario {
   area      Area?
   oab       String?
   telefone  String?
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ativo      Boolean  @default(true)
+  permissoes String[] @default([])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   escritorioId String
   escritorio   Escritorio @relation(fields: [escritorioId], references: [id])

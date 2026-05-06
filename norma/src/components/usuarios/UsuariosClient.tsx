@@ -13,6 +13,7 @@ interface Usuario {
   oab: string | null
   telefone: string | null
   ativo: boolean
+  permissoes: string[]
   createdAt: string
 }
 
@@ -23,10 +24,10 @@ interface Props {
   areaLabels: Record<string, string>
 }
 
-const perfilConfig: Record<string, { label: string; color: string; icon: any }> = {
-  GESTOR_GERAL: { label: 'Gestor Geral', color: 'bg-purple-400/15 text-purple-400', icon: Shield },
-  GERENTE: { label: 'Gerente', color: 'bg-blue-400/15 text-blue-400', icon: Users },
-  COLABORADOR: { label: 'Colaborador', color: 'bg-white/8 text-muted-foreground', icon: Briefcase },
+const perfilConfig: Record<string, { label: string; desc: string; color: string; icon: any }> = {
+  GESTOR_GERAL: { label: 'Administrador', desc: 'Acesso total ao sistema', color: 'bg-purple-400/15 text-purple-400', icon: Shield },
+  GERENTE:      { label: 'Gerente',        desc: 'Acesso total exceto Configurações', color: 'bg-blue-400/15 text-blue-400', icon: Users },
+  COLABORADOR:  { label: 'Colaborador',    desc: 'Acesso somente às telas permitidas', color: 'bg-white/8 text-muted-foreground', icon: Briefcase },
 }
 
 const areaOptions = [
@@ -36,6 +37,20 @@ const areaOptions = [
   { value: 'JURIDICO', label: 'Jurídico' },
   { value: 'FINANCEIRO', label: 'Financeiro' },
   { value: 'MARKETING', label: 'Marketing' },
+]
+
+const TELAS_DISPONIVEIS = [
+  { path: '/dashboard',     label: 'Dashboard' },
+  { path: '/clientes',      label: 'Clientes' },
+  { path: '/processos',     label: 'Processos' },
+  { path: '/prazos',        label: 'Prazos' },
+  { path: '/tarefas',       label: 'Tarefas' },
+  { path: '/financeiro',    label: 'Financeiro' },
+  { path: '/comercial',     label: 'Comercial / CRM' },
+  { path: '/controladoria', label: 'Controladoria' },
+  { path: '/relatorios',    label: 'Relatórios' },
+  { path: '/marketing',     label: 'Marketing' },
+  { path: '/usuarios',      label: 'Usuários' },
 ]
 
 const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
@@ -57,11 +72,12 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
     area: '',
     oab: '',
     telefone: '',
+    permissoes: ['/dashboard'] as string[],
   })
 
   function abrirNovo() {
     setEditando(null)
-    setForm({ nome: '', email: '', senha: '', perfil: 'COLABORADOR', area: '', oab: '', telefone: '' })
+    setForm({ nome: '', email: '', senha: '', perfil: 'COLABORADOR', area: '', oab: '', telefone: '', permissoes: ['/dashboard'] })
     setErro('')
     setModalAberto(true)
   }
@@ -76,6 +92,7 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
       area: u.area || '',
       oab: u.oab || '',
       telefone: u.telefone || '',
+      permissoes: u.permissoes.length > 0 ? u.permissoes : ['/dashboard'],
     })
     setErro('')
     setModalAberto(true)
@@ -84,6 +101,15 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  function togglePermissao(path: string) {
+    setForm(prev => {
+      const exists = prev.permissoes.includes(path)
+      if (exists && path === '/dashboard') return prev // dashboard sempre obrigatório
+      if (exists) return { ...prev, permissoes: prev.permissoes.filter(p => p !== path) }
+      return { ...prev, permissoes: [...prev.permissoes, path] }
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -132,6 +158,7 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
         nome: u.nome, perfil: u.perfil,
         area: u.area, oab: u.oab,
         telefone: u.telefone, ativo: novoAtivo,
+        permissoes: u.permissoes,
       }),
     })
 
@@ -178,9 +205,9 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
             <thead>
               <tr className="border-b border-white/10">
                 <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Usuário</th>
-                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Perfil</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Tipo</th>
                 <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden md:table-cell">Área</th>
-                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden lg:table-cell">OAB</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden lg:table-cell">Telas</th>
                 <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Status</th>
                 <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden sm:table-cell">Desde</th>
                 <th className="px-5 py-3"></th>
@@ -191,6 +218,7 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
                 const perfil = perfilConfig[u.perfil]
                 const Icon = perfil?.icon
                 const ehVoce = u.id === sessaoId
+                const telasCount = u.perfil === 'GESTOR_GERAL' ? 'Todas' : u.perfil === 'GERENTE' ? 'Quase todas' : `${u.permissoes.length}`
 
                 return (
                   <tr key={u.id} className={`border-b border-white/5 last:border-0 transition-colors ${!u.ativo ? 'opacity-50' : 'hover:bg-white/[0.03]'}`}>
@@ -217,7 +245,11 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
                     <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
                       {u.area ? areaLabels[u.area] || u.area : '—'}
                     </td>
-                    <td className="px-5 py-3 text-sm text-muted-foreground hidden lg:table-cell">{u.oab || '—'}</td>
+                    <td className="px-5 py-3 hidden lg:table-cell">
+                      <span className="text-xs font-medium text-muted-foreground bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
+                        {telasCount} {typeof telasCount === 'number' && telasCount !== 1 ? 'telas' : typeof telasCount === 'number' ? 'tela' : ''}
+                      </span>
+                    </td>
                     <td className="px-5 py-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.ativo ? 'bg-emerald-400/15 text-emerald-400' : 'bg-white/8 text-muted-foreground'}`}>
                         {u.ativo ? 'Ativo' : 'Inativo'}
@@ -257,7 +289,7 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
       {/* Modal */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
-          <div className="w-full max-w-lg rounded-2xl border border-white/10" style={{ background: '#161616' }}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10" style={{ background: '#161616' }}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0" style={{ background: '#161616' }}>
               <h2 className="text-base font-semibold text-foreground">
                 {editando ? 'Editar Usuário' : 'Novo Usuário'}
@@ -267,7 +299,8 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Dados básicos */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className={labelClass}>Nome completo *</label>
@@ -300,22 +333,6 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Perfil *</label>
-                  <select name="perfil" value={form.perfil} onChange={handleChange} className={inputClass}>
-                    <option value="COLABORADOR">Colaborador</option>
-                    <option value="GERENTE">Gerente</option>
-                    <option value="GESTOR_GERAL">Gestor Geral</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Área</label>
-                  <select name="area" value={form.area} onChange={handleChange} className={inputClass}>
-                    {areaOptions.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
                   <label className={labelClass}>OAB</label>
                   <input name="oab" value={form.oab} onChange={handleChange} className={inputClass} placeholder="OAB/UF 000000" />
                 </div>
@@ -325,13 +342,95 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
                 </div>
               </div>
 
+              {/* Tipo de usuário */}
+              <div>
+                <label className={labelClass}>Tipo de usuário *</label>
+                <div className="space-y-2 mt-1">
+                  {Object.entries(perfilConfig).map(([key, cfg]) => {
+                    const Ic = cfg.icon
+                    const selecionado = form.perfil === key
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          selecionado
+                            ? 'border-[rgba(184,150,42,0.5)] bg-[rgba(184,150,42,0.08)]'
+                            : 'border-white/10 bg-white/[0.02] hover:bg-white/5'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="perfil"
+                          value={key}
+                          checked={selecionado}
+                          onChange={handleChange}
+                          className="accent-[#B8962A]"
+                        />
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 ${cfg.color}`}>
+                          <Ic size={15} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-foreground">{cfg.label}</div>
+                          <div className="text-xs text-muted-foreground">{cfg.desc}</div>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Área */}
+              <div>
+                <label className={labelClass}>Área / Departamento</label>
+                <select name="area" value={form.area} onChange={handleChange} className={inputClass}>
+                  {areaOptions.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Permissões de telas — somente para COLABORADOR */}
+              {form.perfil === 'COLABORADOR' && (
+                <div>
+                  <label className={labelClass}>Telas com acesso</label>
+                  <p className="text-xs text-muted-foreground mb-3">Dashboard sempre incluído. Marque as demais telas que este colaborador poderá acessar.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TELAS_DISPONIVEIS.map(tela => {
+                      const ativa = form.permissoes.includes(tela.path)
+                      const obrigatoria = tela.path === '/dashboard'
+                      return (
+                        <label
+                          key={tela.path}
+                          className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                            ativa
+                              ? 'border-[rgba(184,150,42,0.4)] bg-[rgba(184,150,42,0.07)]'
+                              : 'border-white/8 bg-white/[0.02] hover:bg-white/5'
+                          } ${obrigatoria ? 'opacity-70' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={ativa}
+                            onChange={() => togglePermissao(tela.path)}
+                            disabled={obrigatoria}
+                            className="accent-[#B8962A] flex-shrink-0"
+                          />
+                          <span className={`text-xs font-medium ${ativa ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            {tela.label}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {erro && (
-                <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3 mt-4">
+                <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3">
                   {erro}
                 </div>
               )}
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setModalAberto(false)}

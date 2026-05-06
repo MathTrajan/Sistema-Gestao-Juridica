@@ -14,6 +14,7 @@ export const authConfig: NextAuthConfig = {
         token.perfil = (user as any).perfil
         token.escritorioId = (user as any).escritorioId
         token.area = (user as any).area ?? null
+        token.permissoes = (user as any).permissoes ?? []
       }
       return token
     },
@@ -23,6 +24,7 @@ export const authConfig: NextAuthConfig = {
         ;(session.user as any).perfil = token.perfil
         ;(session.user as any).escritorioId = token.escritorioId
         ;(session.user as any).area = token.area ?? null
+        ;(session.user as any).permissoes = token.permissoes ?? []
       }
       return session
     },
