@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { TIPOS_LANCAMENTO, STATUS_PAGAMENTO } from '@/lib/constants'
+import { guardArea } from '@/lib/permissions'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
+  if (bloqueado) return bloqueado
 
   const escritorioId = session.user.escritorioId
 
@@ -37,6 +41,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
+  if (bloqueado) return bloqueado
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()

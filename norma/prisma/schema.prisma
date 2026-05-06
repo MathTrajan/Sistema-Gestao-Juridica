@@ -237,12 +237,15 @@ model Tarefa {
   criador       Usuario?   @relation("TarefaCriador", fields: [criadorId], references: [id])
   processoId    String?
   processo      Processo?  @relation(fields: [processoId], references: [id])
+  prazoId       String?
+  prazo         Prazo?     @relation(fields: [prazoId], references: [id])
 
   comentarios Comentario[]
 
   @@index([escritorioId])
   @@index([escritorioId, status])
   @@index([dataVencimento])
+  @@index([prazoId])
   @@map("tarefas")
 }
 
@@ -276,6 +279,7 @@ model Prazo {
 
   processoId String
   processo   Processo @relation(fields: [processoId], references: [id])
+  tarefas    Tarefa[]
 
   @@index([processoId])
   @@index([dataFinal, status])

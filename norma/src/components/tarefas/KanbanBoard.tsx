@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Pencil, X, Calendar } from 'lucide-react'
+import { Pencil, X, Calendar, Search, Link2 } from 'lucide-react'
 
 const colunas = [
   { id: 'A_FAZER', label: 'A Fazer', color: 'bg-gray-100 border-gray-200' },
@@ -28,6 +28,15 @@ interface Tarefa {
   dataVencimento: string | null
   responsavel: { id: string; nome: string } | null
   processo: { id: string; numero: string | null } | null
+  prazoId: string | null
+  prazo: { id: string; titulo: string } | null
+}
+
+interface PrazoOpcao {
+  id: string
+  titulo: string
+  dataFinal: string
+  status: string
 }
 
 const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
@@ -40,14 +49,28 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
   const [overColuna, setOverColuna] = useState<string | null>(null)
   const [salvando, setSalvando] = useState<string | null>(null)
   const [aba, setAba] = useState<'kanban' | 'comPrazo'>('kanban')
+  const [busca, setBusca] = useState('')
   const [editando, setEditando] = useState<Tarefa | null>(null)
   const [editLoading, setEditLoading] = useState(false)
   const [editErro, setEditErro] = useState('')
+  const [prazosDisponiveis, setPrazosDisponiveis] = useState<PrazoOpcao[]>([])
   const [editForm, setEditForm] = useState({
-    titulo: '', descricao: '', prioridade: 'NORMAL', status: 'A_FAZER', dataVencimento: '',
+    titulo: '', descricao: '', prioridade: 'NORMAL', status: 'A_FAZER', dataVencimento: '', prazoId: '',
   })
   const dragItem = useRef<string | null>(null)
   const statusAnterior = useRef<string | null>(null)
+
+  // Busca prazos quando processo estiver definido na tarefa em edição
+  useEffect(() => {
+    if (!editando?.processo?.id) {
+      setPrazosDisponiveis([])
+      return
+    }
+    fetch(`/api/prazos?processoId=${editando.processo.id}`)
+      .then(r => r.json())
+      .then((data: PrazoOpcao[]) => setPrazosDisponiveis(Array.isArray(data) ? data : []))
+      .catch(() => setPrazosDisponiveis([]))
+  }, [editando?.processo?.id])
 
   function abrirEditar(t: Tarefa) {
     setEditForm({
@@ -56,6 +79,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
       prioridade: t.prioridade,
       status: t.status,
       dataVencimento: t.dataVencimento ? t.dataVencimento.slice(0, 10) : '',
+      prazoId: t.prazoId ?? '',
     })
     setEditando(t)
     setEditErro('')
@@ -80,9 +104,11 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
           prioridade: editForm.prioridade,
           status: editForm.status,
           dataVencimento: editForm.dataVencimento || null,
+          prazoId: editForm.prazoId || null,
         }),
       })
       if (!res.ok) throw new Error()
+      const prazoSelecionado = prazosDisponiveis.find(p => p.id === editForm.prazoId) ?? null
       setTarefas(prev => prev.map(t =>
         t.id === editando.id
           ? {
@@ -92,6 +118,8 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
               prioridade: editForm.prioridade,
               status: editForm.status,
               dataVencimento: editForm.dataVencimento ? new Date(editForm.dataVencimento).toISOString() : null,
+              prazoId: editForm.prazoId || null,
+              prazo: prazoSelecionado ? { id: prazoSelecionado.id, titulo: prazoSelecionado.titulo } : null,
             }
           : t
       ))
@@ -156,12 +184,37 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
     }
   }
 
-  const tarefasComPrazo = tarefas
+  // Filtra tarefas pela busca (título, descrição, responsável, processo)
+  const tarefasFiltradas = busca.trim()
+    ? tarefas.filter(t => {
+        const q = busca.toLowerCase()
+        return (
+          t.titulo.toLowerCase().includes(q) ||
+          t.descricao?.toLowerCase().includes(q) ||
+          t.responsavel?.nome.toLowerCase().includes(q) ||
+          t.processo?.numero?.toLowerCase().includes(q) ||
+          t.prazo?.titulo.toLowerCase().includes(q)
+        )
+      })
+    : tarefas
+
+  const tarefasComPrazo = tarefasFiltradas
     .filter(t => t.dataVencimento && t.status !== 'CONCLUIDO')
     .sort((a, b) => new Date(a.dataVencimento!).getTime() - new Date(b.dataVencimento!).getTime())
 
   return (
     <>
+      {/* Busca */}
+      <div className="relative mb-5">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar por título, responsável, processo, prazo..."
+          className="w-full border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+        />
+      </div>
+
       {/* Abas */}
       <div className="flex gap-1 mb-6">
         <button
@@ -192,7 +245,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
       {aba === 'kanban' && (
         <div className="flex gap-5 overflow-x-auto pb-4 min-h-96">
           {colunas.map(coluna => {
-            const tarefasColuna = tarefas.filter(t => t.status === coluna.id)
+            const tarefasColuna = tarefasFiltradas.filter(t => t.status === coluna.id)
             const isOver = overColuna === coluna.id
 
             return (
@@ -270,7 +323,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                         )}
 
                         {tarefa.processo && (
-                          <div className="text-xs mb-2">
+                          <div className="text-xs mb-1">
                             <Link
                               href={`/processos/${tarefa.processo.id}`}
                               className="text-green-700 hover:underline"
@@ -278,6 +331,13 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                             >
                               {tarefa.processo.numero || 'Processo sem número'}
                             </Link>
+                          </div>
+                        )}
+
+                        {tarefa.prazo && (
+                          <div className="flex items-center gap-1 text-xs text-purple-700 mb-1">
+                            <Link2 size={10} />
+                            <span className="truncate">{tarefa.prazo.titulo}</span>
                           </div>
                         )}
 
@@ -359,6 +419,12 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                             </Link>
                           </div>
                         )}
+                        {t.prazo && (
+                          <div className="flex items-center gap-1 text-xs text-purple-700 mt-0.5">
+                            <Link2 size={10} />
+                            <span>{t.prazo.titulo}</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${p.color}`}>{p.label}</span>
@@ -432,6 +498,22 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                   <label className={labelClass}>Data de Vencimento</label>
                   <input type="date" name="dataVencimento" value={editForm.dataVencimento} onChange={handleEditChange} className={inputClass} />
                 </div>
+                {editando.processo && (
+                  <div>
+                    <label className={labelClass}>Prazo Vinculado</label>
+                    <select name="prazoId" value={editForm.prazoId} onChange={handleEditChange} className={inputClass}>
+                      <option value="">Nenhum</option>
+                      {prazosDisponiveis.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.titulo} — {new Date(p.dataFinal).toLocaleDateString('pt-BR')}
+                        </option>
+                      ))}
+                    </select>
+                    {prazosDisponiveis.length === 0 && (
+                      <p className="text-xs text-gray-400 mt-1">Nenhum prazo cadastrado para este processo.</p>
+                    )}
+                  </div>
+                )}
               </div>
               {editErro && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">{editErro}</div>}
               <div className="flex gap-3 mt-6">
