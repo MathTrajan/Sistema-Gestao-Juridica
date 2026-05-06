@@ -1,15 +1,18 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { formatDocumento } from '@/lib/utils'
+import { formatDocumento, formatTelefone } from '@/lib/utils'
+import { Users, FileText, UserCheck } from 'lucide-react'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { GlassCard } from '@/components/dashboard/glass-card'
 
 const areaLabels: Record<string, string> = {
   TRABALHISTA: 'Trabalhista',
-  CIVIL: 'Cível',
-  TRIBUTARIO: 'Tributário',
-  PREVIDENCIARIO: 'Previdenciário',
+  CIVIL: 'Civel',
+  TRIBUTARIO: 'Tributario',
+  PREVIDENCIARIO: 'Previdenciario',
   CRIMINAL: 'Criminal',
-  FAMILIA: 'Família',
+  FAMILIA: 'Familia',
   EMPRESARIAL: 'Empresarial',
   CONSUMIDOR: 'Consumidor',
   AMBIENTAL: 'Ambiental',
@@ -17,10 +20,10 @@ const areaLabels: Record<string, string> = {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  ATIVO: { label: 'Ativo', color: 'bg-green-100 text-green-800' },
-  INATIVO: { label: 'Inativo', color: 'bg-gray-100 text-gray-600' },
-  PROSPECTO: { label: 'Prospecto', color: 'bg-blue-100 text-blue-800' },
-  DOCUMENTACAO_PENDENTE: { label: 'Doc. Pendente', color: 'bg-amber-100 text-amber-800' },
+  ATIVO: { label: 'Ativo', color: 'bg-success-bg text-success' },
+  INATIVO: { label: 'Inativo', color: 'bg-white/8 text-muted-foreground' },
+  PROSPECTO: { label: 'Prospecto', color: 'bg-info-bg text-info' },
+  DOCUMENTACAO_PENDENTE: { label: 'Doc. pendente', color: 'bg-warning-bg text-warning' },
 }
 
 export default async function ClientesPage({
@@ -30,104 +33,137 @@ export default async function ClientesPage({
 }) {
   const { search } = await searchParams
   const session = await auth()
-  const escritorioId = (session?.user as any)?.escritorioId
+  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const escritorioId = userData?.escritorioId
 
-  const clientes = await prisma.cliente.findMany({
-    where: {
-      escritorioId,
-      ...(search ? {
-        OR: [
-          { nomeCompleto: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-          { cpf: { contains: search } },
-          { cnpj: { contains: search } },
-        ],
-      } : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      _count: { select: { processos: true } }
-    }
-  })
+  const clientes = await prisma.cliente
+    .findMany({
+      where: {
+        escritorioId,
+        ...(search
+          ? {
+              OR: [
+                { nomeCompleto: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { cpf: { contains: search } },
+                { cnpj: { contains: search } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { processos: true } },
+      },
+    })
+    .catch(() => [])
+
+  const ativos = clientes.filter((cliente) => cliente.status === 'ATIVO').length
+  const comProcessos = clientes.filter((cliente) => cliente._count.processos > 0).length
+  const limite = new Date()
+  limite.setDate(limite.getDate() - 30)
+  const novos30d = clientes.filter((cliente) => cliente.createdAt >= limite).length
 
   return (
-    <div className="p-8">
-      {search && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-gray-600">Resultados para: <strong>{search}</strong></span>
-          <a href="/clientes" className="text-xs text-green-700 hover:underline">Limpar</a>
+    <div className="page-enter px-6 py-8 xl:px-10">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.32em] text-muted-foreground">Relacionamento</p>
+          <h1 className="mt-3 text-3xl font-semibold text-foreground">Carteira de clientes</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Visualize status, contatos e volume de processos em um painel unico.
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* Tabela */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        {clientes.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="text-gray-300 text-5xl mb-4">👤</div>
-            <div className="text-gray-500 font-medium">Nenhum cliente cadastrado</div>
-            <div className="text-gray-400 text-sm mt-1">Clique em "Novo Cliente" para começar</div>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Nome</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Documento</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Contato</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Área</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Processos</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Status</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientes.map((cliente) => {
-                const status = statusConfig[cliente.status]
-                const doc = cliente.cpf || cliente.cnpj
-                return (
-                  <tr key={cliente.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3">
-                      <div className="font-medium text-gray-900 text-sm">{cliente.nomeCompleto}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {cliente.tipo === 'PESSOA_FISICA' ? 'Pessoa Física' : 'Pessoa Jurídica'}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-sm text-gray-600">
-                      {doc ? formatDocumento(doc) : '—'}
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="text-sm text-gray-600">{cliente.telefone || '—'}</div>
-                      <div className="text-xs text-gray-400">{cliente.email || ''}</div>
-                    </td>
-                    <td className="px-5 py-3">
-                      {cliente.areaJuridica ? (
-                        <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                          {areaLabels[cliente.areaJuridica]}
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-5 py-3 text-sm font-semibold text-gray-700">
-                      {cliente._count.processos}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/clientes/${cliente.id}`}
-                        className="text-xs text-green-700 hover:underline font-medium"
-                      >
-                        Ver
-                      </Link>
-                    </td>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <StatCard icon={<Users size={18} />} label="Clientes cadastrados" value={clientes.length} sub={`${ativos} ativos hoje`} iconColor="gold" />
+        <StatCard icon={<FileText size={18} />} label="Com processos" value={comProcessos} sub="Clientes com acompanhamento em curso" iconColor="blue" index={1} />
+        <StatCard icon={<UserCheck size={18} />} label="Entradas recentes" value={novos30d} sub="Cadastros nos ultimos 30 dias" iconColor="green" index={2} />
+      </div>
+
+      {search ? (
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-gold/20 bg-gold/8 px-4 py-3 text-sm text-gold">
+          <span>
+            Resultados para: <strong>{search}</strong>
+          </span>
+          <Link href="/clientes" className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-light hover:text-gold">
+            Limpar
+          </Link>
+        </div>
+      ) : null}
+
+      <div className="mt-6">
+        <GlassCard title="Base de clientes" badge={{ text: `${clientes.length} registros`, variant: 'gold' }}>
+          {clientes.length === 0 ? (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-16 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white/6 text-gold">
+                <Users size={30} />
+              </div>
+              <div className="font-medium text-foreground">Nenhum cliente cadastrado</div>
+              <div className="mt-1 text-sm text-muted-foreground">Use o botao Novo Cliente para comecar.</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[920px]">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/3">
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Nome</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Documento</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Contato</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Area</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Processos</th>
+                    <th className="px-5 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Status</th>
+                    <th className="px-5 py-4" />
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
+                </thead>
+                <tbody>
+                  {clientes.map((cliente) => {
+                    const status = statusConfig[cliente.status]
+                    const doc = cliente.cpf || cliente.cnpj
+
+                    return (
+                      <tr key={cliente.id} className="border-b border-white/6 transition-colors hover:bg-white/4">
+                        <td className="px-5 py-3">
+                          <div className="text-sm font-medium text-foreground">{cliente.nomeCompleto}</div>
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            {cliente.tipo === 'PESSOA_FISICA' ? 'Pessoa fisica' : 'Pessoa juridica'}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-slate-300">{doc ? formatDocumento(doc) : '-'}</td>
+                        <td className="px-5 py-3">
+                          <div className="text-sm text-slate-200">{cliente.telefone ? formatTelefone(cliente.telefone) : '-'}</div>
+                          <div className="text-xs text-muted-foreground">{cliente.email || 'Sem email'}</div>
+                        </td>
+                        <td className="px-5 py-3">
+                          {cliente.areaJuridica ? (
+                            <span className="rounded-full bg-info-bg px-2.5 py-1 text-xs font-medium text-info">
+                              {areaLabels[cliente.areaJuridica]}
+                            </span>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-sm font-semibold text-foreground">{cliente._count.processos}</td>
+                        <td className="px-5 py-3">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}>{status.label}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <Link
+                            href={`/clientes/${cliente.id}`}
+                            className="text-xs font-semibold uppercase tracking-[0.24em] text-gold hover:text-gold-light"
+                          >
+                            Ver
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
       </div>
     </div>
   )

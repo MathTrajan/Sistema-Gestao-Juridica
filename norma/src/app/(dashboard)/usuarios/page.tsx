@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+﻿import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import UsuariosClient from '@/components/usuarios/UsuariosClient'
 
@@ -13,7 +13,7 @@ const perfilLabels: Record<string, string> = {
 const areaLabels: Record<string, string> = {
   COMERCIAL: 'Comercial',
   CONTROLADORIA: 'Controladoria',
-  JURIDICO: 'Jurídico',
+  JURIDICO: 'JurÃ­dico',
   FINANCEIRO: 'Financeiro',
   MARKETING: 'Marketing',
 }
@@ -47,7 +47,7 @@ export default async function UsuariosPage() {
   }))
 
   return (
-    <div className="p-8">
+    <div className="page-enter p-8">
       <UsuariosClient
         usuarios={usuariosMapeados}
         sessaoId={sessaoId}

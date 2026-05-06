@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+﻿import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import ComercialClient from '@/components/comercial/ComercialClient'
 
@@ -34,7 +34,7 @@ export default async function ComercialPage() {
   }))
 
   return (
-    <div className="p-8">
+    <div className="page-enter p-8">
       <ComercialClient leads={leads} />
     </div>
   )

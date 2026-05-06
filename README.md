@@ -1,123 +1,141 @@
-# JurisFlow
+# Norma
 
-Sistema de gestão jurídica integrado para escritórios de advocacia. Desenvolvido como protótipo pessoal com estrutura pensada para evolução a produto comercial (SaaS).
+Sistema de gestão jurídica para escritórios de advocacia, com foco em operação diária, controle interno e visão gerencial.
 
-**Demo:** https://projetosasjuridico.vercel.app
+O app principal deste repositório está em [`norma/`](./norma).
 
-## Objetivo
+## Visão Geral
 
-Centralizar o gerenciamento de clientes, processos, prazos, tarefas, financeiro e pipeline comercial em uma única plataforma, eliminando planilhas e sistemas dispersos nos escritórios.
+O projeto reúne os módulos centrais de um escritório:
 
-## Funcionalidades
+- Dashboard com indicadores operacionais
+- Clientes
+- Processos
+- Tarefas em Kanban
+- Prazos processuais
+- Financeiro
+- Comercial / CRM
+- Controladoria
+- Relatórios
+- Usuários e permissões
+- Configurações do escritório
 
-| Módulo | Descrição |
-|---|---|
-| **Dashboard** | KPIs em tempo real: clientes ativos, processos em andamento, prazos críticos |
-| **Clientes** | Cadastro de PF/PJ com busca de CEP automática (ViaCEP) |
-| **Processos** | Gestão de processos judiciais e administrativos com fases e status |
-| **Tarefas** | Kanban board com arrastar e soltar, prioridades e responsáveis |
-| **Prazos** | Controle de prazos processuais com alertas de vencimento |
-| **Financeiro** | Controle de receitas e despesas com marcação de pagamentos |
-| **Comercial** | Funil de vendas com 6 etapas e lead scoring |
-| **Controladoria** | Visão operacional de processos sem responsável e clientes pendentes |
-| **Relatórios** | Consolidado de métricas por módulo |
-| **Usuários** | Gestão de equipe com perfis: Gestor Geral, Gerente e Colaborador |
-| **Configurações** | Dados do escritório e plano contratado |
+## Stack
 
-## Tecnologias
+- Next.js 16 + App Router
+- React 19
+- TypeScript 5
+- Prisma ORM
+- PostgreSQL
+- NextAuth v5
+- Tailwind CSS 4
+- Framer Motion
+- Recharts
+- React Hook Form + Zod
 
-- **Framework:** Next.js 16 (App Router) + React 19
-- **Linguagem:** TypeScript 5
-- **Banco de dados:** PostgreSQL 18 via Prisma ORM 5
-- **Autenticação:** NextAuth v5 (JWT + bcrypt)
-- **UI:** Tailwind CSS 4 + Radix UI + Lucide React
-- **Validação:** Zod + React Hook Form
-- **Cache de estado:** TanStack React Query
+## Estrutura Do Repositório
 
-## Pré-requisitos
+```text
+Sistema-Gestao-Jurídico/
+├─ norma/        # aplicação principal
+├─ ModeloV2/     # referências visuais e protótipos
+├─ Docs/         # arquivos de apoio e documentação
+└─ LogoMarca/    # materiais de marca
+```
 
-- Node.js 20+
-- PostgreSQL 15+
-- npm ou yarn
-
-## Instalação e execução
+## Como Rodar
 
 ```bash
-# 1. Acesse a pasta do projeto
-cd jurisflow
-
-# 2. Instale as dependências
+cd norma
 npm install
+```
 
-# 3. Configure as variáveis de ambiente
-cp .env.example .env
-# Edite .env com suas credenciais do PostgreSQL e um NEXTAUTH_SECRET forte
-# Gere o secret com: openssl rand -base64 32
+Crie um arquivo `.env` em `norma/` com base no `.env.example`.
 
-# 4. Execute as migrations do banco de dados
+Variáveis esperadas:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/norma"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/norma"
+NEXTAUTH_SECRET="gere-um-secret-com-pelo-menos-32-caracteres"
+NEXTAUTH_URL="http://localhost:3001"
+NEXT_PUBLIC_SENTRY_DSN=""
+```
+
+Depois:
+
+```bash
+npx prisma generate
 npx prisma migrate deploy
-
-# 5. Popule o banco com o usuário administrador padrão
 npx prisma db seed
-
-# 6. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-Acesse em: **http://localhost:3000**
+Aplicação local:
 
-**Login padrão após o seed:**
+- `http://localhost:3001`
+
+Login inicial do seed:
+
 - E-mail: `admin@escritorio.com`
 - Senha: `123456`
-- **Troque a senha no primeiro acesso!**
 
-## Estrutura do projeto
+## Scripts
 
-```
-jurisflow/
-├── prisma/
-│   ├── migrations/        # Histórico de migrations do banco
-│   └── seed.ts            # Script de dados iniciais
-├── src/
-│   ├── app/
-│   │   ├── (auth)/        # Páginas públicas (login)
-│   │   ├── (dashboard)/   # Páginas protegidas
-│   │   └── api/           # Endpoints REST
-│   ├── components/        # Componentes React por módulo
-│   ├── lib/
-│   │   ├── auth.ts        # Configuração NextAuth
-│   │   ├── constants.ts   # Valores dos enums (fonte única de verdade)
-│   │   ├── prisma.ts      # Singleton do Prisma
-│   │   └── utils.ts       # Formatadores (CPF, CNPJ, telefone)
-│   ├── middleware.ts       # Proteção de rotas por autenticação
-│   └── types/
-│       └── next-auth.d.ts # Tipagem da sessão estendida
-└── Docs/                  # Documentação de requisitos
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
 ```
 
-## Variáveis de ambiente
+## Arquitetura
 
-Crie o arquivo `jurisflow/.env` baseado no `.env.example`:
+Dentro de [`norma/src`](./norma/src):
 
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/jurisflow"
-NEXTAUTH_SECRET="string-aleatoria-de-32-chars-minimo"
-NEXTAUTH_URL="http://localhost:3000"
-```
+- `app/`: rotas, layouts e APIs
+- `components/`: componentes por domínio
+- `lib/`: autenticação, utilitários e integrações
+- `types/`: extensões de tipos
 
-## Possíveis melhorias futuras
+Dentro de [`norma/prisma`](./norma/prisma):
 
-- [ ] Upload e visualização de documentos (S3 / Cloudflare R2)
-- [ ] Integração com DataJud para captura automática de andamentos
-- [ ] Cálculo automático de prazos em dias úteis
-- [ ] Notificações por e-mail e WhatsApp para prazos críticos
-- [ ] 2FA (autenticação em dois fatores)
-- [ ] Log de auditoria de todas as alterações
-- [ ] Busca global com filtros avançados
-- [ ] Exportação de relatórios em PDF / Excel
-- [ ] App mobile (React Native)
-- [ ] Arquitetura multi-tenant para SaaS
+- `schema.prisma`: modelo de dados
+- `migrations/`: histórico de banco
+- `seed.ts`: dados iniciais de desenvolvimento
 
-## Licença
+## Segurança E Acesso
 
-Projeto pessoal — todos os direitos reservados.
+O sistema já possui:
+
+- autenticação com credenciais
+- proteção de rotas via middleware
+- níveis de acesso por perfil
+- restrição por área para colaboradores
+- rate limit básico para rotas de API
+
+Perfis disponíveis:
+
+- `GESTOR_GERAL`
+- `GERENTE`
+- `COLABORADOR`
+
+Áreas disponíveis:
+
+- `JURIDICO`
+- `COMERCIAL`
+- `FINANCEIRO`
+- `CONTROLADORIA`
+- `MARKETING`
+
+## Observações Para Publicação No GitHub
+
+- O diretório principal para desenvolvimento e deploy é `norma/`
+- Não suba `.env`, logs locais ou artefatos de build
+- O seed é voltado para desenvolvimento e não deve ser usado em produção
+- Em produção, troque `NEXTAUTH_SECRET` e as credenciais padrão
+
+## Status Atual
+
+O projeto está funcional e organizado para continuidade de desenvolvimento. Há melhorias técnicas ainda possíveis em lint e tipagem em alguns arquivos legados, mas isso não impede a publicação do repositório.
+

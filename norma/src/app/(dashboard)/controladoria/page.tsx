@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+﻿import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { AlertTriangle, Clock, FileText, Users, CheckSquare } from 'lucide-react'
@@ -21,8 +21,8 @@ const prioridadeConfig: Record<string, { label: string; color: string }> = {
 }
 
 const areaLabels: Record<string, string> = {
-  TRABALHISTA: 'Trabalhista', CIVIL: 'Cível', TRIBUTARIO: 'Tributário',
-  PREVIDENCIARIO: 'Previdenciário', CRIMINAL: 'Criminal', FAMILIA: 'Família',
+  TRABALHISTA: 'Trabalhista', CIVIL: 'CÃ­vel', TRIBUTARIO: 'TributÃ¡rio',
+  PREVIDENCIARIO: 'PrevidenciÃ¡rio', CRIMINAL: 'Criminal', FAMILIA: 'FamÃ­lia',
   EMPRESARIAL: 'Empresarial', CONSUMIDOR: 'Consumidor', AMBIENTAL: 'Ambiental', OUTRO: 'Outro',
 }
 
@@ -97,7 +97,7 @@ export default async function ControladoriPage() {
   const totalPrazos = prazosProximos.length
 
   return (
-    <div className="p-8">
+    <div className="page-enter p-8">
 
       {/* Alertas */}
       {(clientesDocPendente.length > 0 || processosSemResponsavel > 0) && (
@@ -106,10 +106,10 @@ export default async function ControladoriPage() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
               <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
               <span className="text-sm text-amber-800 font-medium">
-                {clientesDocPendente.length} cliente{clientesDocPendente.length !== 1 ? 's' : ''} com documentação pendente
+                {clientesDocPendente.length} cliente{clientesDocPendente.length !== 1 ? 's' : ''} com documentaÃ§Ã£o pendente
               </span>
               <Link href="/clientes" className="ml-auto text-xs text-amber-700 hover:underline font-medium">
-                Ver clientes →
+                Ver clientes â†’
               </Link>
             </div>
           )}
@@ -117,10 +117,10 @@ export default async function ControladoriPage() {
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
               <AlertTriangle size={16} className="text-red-600 flex-shrink-0" />
               <span className="text-sm text-red-800 font-medium">
-                {processosSemResponsavel} processo{processosSemResponsavel !== 1 ? 's' : ''} sem responsável atribuído
+                {processosSemResponsavel} processo{processosSemResponsavel !== 1 ? 's' : ''} sem responsÃ¡vel atribuÃ­do
               </span>
               <Link href="/processos" className="ml-auto text-xs text-red-700 hover:underline font-medium">
-                Ver processos →
+                Ver processos â†’
               </Link>
             </div>
           )}
@@ -155,7 +155,7 @@ export default async function ControladoriPage() {
             <Clock size={16} />
           </div>
           <div className="text-2xl font-bold text-gray-900">{totalPrazos}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Prazos próximos (7d)</div>
+          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Prazos prÃ³ximos (7d)</div>
         </div>
       </div>
 
@@ -179,7 +179,7 @@ export default async function ControladoriPage() {
                       <div className="text-sm font-medium text-gray-900 truncate">{t.titulo}</div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {t.processo?.cliente?.nomeCompleto ?? 'Sem processo'}
-                        {t.responsavel && ` · ${t.responsavel.nome}`}
+                        {t.responsavel && ` Â· ${t.responsavel.nome}`}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -199,14 +199,14 @@ export default async function ControladoriPage() {
           )}
         </div>
 
-        {/* Prazos Próximos */}
+        {/* Prazos PrÃ³ximos */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <span className="font-semibold text-gray-900 text-sm">Prazos — Próximos 7 dias</span>
+            <span className="font-semibold text-gray-900 text-sm">Prazos â€” PrÃ³ximos 7 dias</span>
             <Link href="/prazos" className="text-xs text-green-700 hover:underline font-medium">Ver todos</Link>
           </div>
           {prazosProximos.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">Nenhum prazo nos próximos 7 dias</div>
+            <div className="p-8 text-center text-gray-400 text-sm">Nenhum prazo nos prÃ³ximos 7 dias</div>
           ) : (
             <div>
               {prazosProximos.map((p, i) => {
@@ -219,9 +219,9 @@ export default async function ControladoriPage() {
                       <div className="text-sm font-medium text-gray-900 truncate">{p.titulo}</div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         <Link href={`/processos/${p.processo.id}`} className="hover:underline text-green-700">
-                          {p.processo.numero || 'Sem número'}
+                          {p.processo.numero || 'Sem nÃºmero'}
                         </Link>
-                        {` · ${p.processo.cliente.nomeCompleto}`}
+                        {` Â· ${p.processo.cliente.nomeCompleto}`}
                       </div>
                     </div>
                     <div className={`text-xs font-bold flex-shrink-0 ${critico ? 'text-red-700' : atencao ? 'text-amber-700' : 'text-gray-500'}`}>
@@ -237,11 +237,11 @@ export default async function ControladoriPage() {
         {/* Clientes com Doc. Pendente */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <span className="font-semibold text-gray-900 text-sm">Documentação Pendente</span>
+            <span className="font-semibold text-gray-900 text-sm">DocumentaÃ§Ã£o Pendente</span>
             <Link href="/clientes" className="text-xs text-green-700 hover:underline font-medium">Ver clientes</Link>
           </div>
           {clientesDocPendente.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">Nenhum cliente com documentação pendente</div>
+            <div className="p-8 text-center text-gray-400 text-sm">Nenhum cliente com documentaÃ§Ã£o pendente</div>
           ) : (
             <div>
               {clientesDocPendente.map((c, i) => (
@@ -254,8 +254,8 @@ export default async function ControladoriPage() {
                       {c.nomeCompleto}
                     </Link>
                     <div className="text-xs text-gray-400 mt-0.5">
-                      {c.areaJuridica ? areaLabels[c.areaJuridica] : '—'}
-                      {` · Desde ${new Date(c.createdAt).toLocaleDateString('pt-BR')}`}
+                      {c.areaJuridica ? areaLabels[c.areaJuridica] : 'â€”'}
+                      {` Â· Desde ${new Date(c.createdAt).toLocaleDateString('pt-BR')}`}
                     </div>
                   </div>
                   <span className="text-xs font-medium bg-amber-100 text-amber-800 px-2 py-1 rounded-full flex-shrink-0">
@@ -282,12 +282,12 @@ export default async function ControladoriPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <Link href={`/processos/${p.id}`} className="text-sm font-medium text-green-700 hover:underline truncate">
-                        {p.numero || 'Sem número'}
+                        {p.numero || 'Sem nÃºmero'}
                       </Link>
                     </div>
                     <div className="text-xs text-gray-400 mt-0.5">
                       {p.cliente.nomeCompleto}
-                      {p.responsavel && ` · ${p.responsavel.nome}`}
+                      {p.responsavel && ` Â· ${p.responsavel.nome}`}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0 text-xs text-gray-400">
@@ -304,16 +304,16 @@ export default async function ControladoriPage() {
       {/* Fluxo Operacional */}
       <div className="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm">
         <div className="px-5 py-4 border-b border-gray-100">
-          <span className="font-semibold text-gray-900 text-sm">Fluxo Operacional do Escritório</span>
+          <span className="font-semibold text-gray-900 text-sm">Fluxo Operacional do EscritÃ³rio</span>
         </div>
         <div className="p-5">
           <div className="flex items-center gap-0">
             {[
-              { num: '1', label: 'Comercial', sub: 'Captação e cadastro', color: 'bg-green-700', href: '/comercial' },
-              { num: '2', label: 'Controladoria', sub: 'Conferência documental', color: 'bg-blue-700', href: '/controladoria' },
-              { num: '3', label: 'Jurídico', sub: 'Elaboração de peças', color: 'bg-purple-700', href: '/processos' },
+              { num: '1', label: 'Comercial', sub: 'CaptaÃ§Ã£o e cadastro', color: 'bg-green-700', href: '/comercial' },
+              { num: '2', label: 'Controladoria', sub: 'ConferÃªncia documental', color: 'bg-blue-700', href: '/controladoria' },
+              { num: '3', label: 'JurÃ­dico', sub: 'ElaboraÃ§Ã£o de peÃ§as', color: 'bg-purple-700', href: '/processos' },
               { num: '4', label: 'Protocolo', sub: 'Protocolo e acompanhamento', color: 'bg-amber-700', href: '/processos' },
-              { num: '5', label: 'Financeiro', sub: 'Honorários e cobranças', color: 'bg-red-700', href: '/financeiro' },
+              { num: '5', label: 'Financeiro', sub: 'HonorÃ¡rios e cobranÃ§as', color: 'bg-red-700', href: '/financeiro' },
             ].map((etapa, i, arr) => (
               <div key={etapa.num} className="flex items-center flex-1">
                 <Link href={etapa.href} className="flex flex-col items-center flex-1 group">
@@ -324,7 +324,7 @@ export default async function ControladoriPage() {
                   <div className="text-xs text-gray-400 text-center leading-tight mt-0.5">{etapa.sub}</div>
                 </Link>
                 {i < arr.length - 1 && (
-                  <div className="text-gray-300 text-lg mx-1">→</div>
+                  <div className="text-gray-300 text-lg mx-1">â†’</div>
                 )}
               </div>
             ))}

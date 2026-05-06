@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, TrendingUp, TrendingDown, DollarSign, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 
@@ -78,38 +78,41 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
     recorrente: false,
   })
 
-  const filtrados = lancamentos
-    .filter(l => filtro === 'TODOS' ? true : l.tipo === filtro)
-    .slice()
-    .sort((a, b) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime())
+  const filtrados = useMemo(() => (
+    lancamentos
+      .filter((l) => filtro === 'TODOS' ? true : l.tipo === filtro)
+      .slice()
+      .sort((a, b) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime())
+  ), [filtro, lancamentos])
 
-  // Group by month
-  const grupos: { key: string; label: string; items: Lancamento[] }[] = []
-  for (const l of filtrados) {
-    const key = mesAnoKey(l.dataVencimento)
-    const last = grupos[grupos.length - 1]
-    if (last && last.key === key) {
-      last.items.push(l)
-    } else {
-      grupos.push({ key, label: mesAnoLabel(l.dataVencimento), items: [l] })
+  const grupos = useMemo(() => {
+    const grouped: { key: string; label: string; items: Lancamento[] }[] = []
+    for (const lancamento of filtrados) {
+      const key = mesAnoKey(lancamento.dataVencimento)
+      const last = grouped[grouped.length - 1]
+      if (last && last.key === key) {
+        last.items.push(lancamento)
+      } else {
+        grouped.push({ key, label: mesAnoLabel(lancamento.dataVencimento), items: [lancamento] })
+      }
     }
-  }
+    return grouped
+  }, [filtrados])
 
-  const totalEntradas = lancamentos
-    .filter(l => l.tipo === 'ENTRADA' && l.status === 'PAGO')
-    .reduce((acc, l) => acc + l.valor, 0)
-
-  const totalSaidas = lancamentos
-    .filter(l => l.tipo === 'SAIDA' && l.status === 'PAGO')
-    .reduce((acc, l) => acc + l.valor, 0)
-
-  const aReceber = lancamentos
-    .filter(l => l.tipo === 'ENTRADA' && l.status === 'PENDENTE')
-    .reduce((acc, l) => acc + l.valor, 0)
-
-  const inadimplencia = lancamentos
-    .filter(l => l.tipo === 'ENTRADA' && l.status === 'ATRASADO')
-    .reduce((acc, l) => acc + l.valor, 0)
+  const { totalEntradas, totalSaidas, aReceber, inadimplencia } = useMemo(() => ({
+    totalEntradas: lancamentos
+      .filter((l) => l.tipo === 'ENTRADA' && l.status === 'PAGO')
+      .reduce((acc, l) => acc + l.valor, 0),
+    totalSaidas: lancamentos
+      .filter((l) => l.tipo === 'SAIDA' && l.status === 'PAGO')
+      .reduce((acc, l) => acc + l.valor, 0),
+    aReceber: lancamentos
+      .filter((l) => l.tipo === 'ENTRADA' && l.status === 'PENDENTE')
+      .reduce((acc, l) => acc + l.valor, 0),
+    inadimplencia: lancamentos
+      .filter((l) => l.tipo === 'ENTRADA' && l.status === 'ATRASADO')
+      .reduce((acc, l) => acc + l.valor, 0),
+  }), [lancamentos])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value, type } = e.target
@@ -362,7 +365,7 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
           <div className="p-16 text-center">
             <div className="text-gray-300 text-5xl mb-4">💰</div>
             <div className="text-gray-500 font-medium">Nenhum lançamento</div>
-            <div className="text-gray-400 text-sm mt-1">Clique em "Novo Lançamento" para começar</div>
+            <div className="text-gray-400 text-sm mt-1">Clique em &quot;Novo Lançamento&quot; para começar</div>
           </div>
         ) : (
           <table className="w-full">
@@ -570,3 +573,4 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
     </>
   )
 }
+

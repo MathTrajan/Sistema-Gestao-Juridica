@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+﻿import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import ConfiguracoesClient from '@/components/configuracoes/ConfiguracoesClient'
 
@@ -13,7 +13,7 @@ export default async function ConfiguracoesPage() {
   })
 
   return (
-    <div className="p-8">
+    <div className="page-enter p-8">
       <ConfiguracoesClient escritorio={escritorio ? {
         ...escritorio,
         plano: escritorio.plano as string,

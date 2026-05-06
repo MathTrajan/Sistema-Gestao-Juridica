@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+﻿import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import FinanceiroClient from '@/components/financeiro/FinanceiroClient'
 
@@ -40,7 +40,7 @@ export default async function FinanceiroPage() {
   }))
 
   return (
-    <div className="p-8">
+    <div className="page-enter p-8">
       <FinanceiroClient lancamentos={lancamentos} clientes={clientes} />
     </div>
   )

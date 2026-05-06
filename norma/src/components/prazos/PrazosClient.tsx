@@ -1,21 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AlertTriangle, Pencil, Trash2, X } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { AlertTriangle, Pencil, Trash2, X, CalendarClock, CheckCircle2, Filter } from 'lucide-react'
+import { GlassCard } from '@/components/dashboard/glass-card'
+import { cn } from '@/lib/utils'
 
 const tipoPrazoLabels: Record<string, string> = {
-  RECURSO: 'Recurso', CONTESTACAO: 'Contestação', MANIFESTACAO: 'Manifestação',
-  REPLICA: 'Réplica', APELACAO: 'Apelação', CONTRARRAZOES: 'Contrarrazões',
-  EMBARGOS: 'Embargos', OUTRO: 'Outro',
+  RECURSO: 'Recurso',
+  CONTESTACAO: 'Contestacao',
+  MANIFESTACAO: 'Manifestacao',
+  REPLICA: 'Replica',
+  APELACAO: 'Apelacao',
+  CONTRARRAZOES: 'Contrarrazoes',
+  EMBARGOS: 'Embargos',
+  OUTRO: 'Outro',
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  ABERTO: { label: 'Aberto', color: 'bg-amber-100 text-amber-800' },
-  CUMPRIDO: { label: 'Cumprido', color: 'bg-green-100 text-green-800' },
-  PERDIDO: { label: 'Perdido', color: 'bg-red-100 text-red-800' },
-  SUSPENSO: { label: 'Suspenso', color: 'bg-gray-100 text-gray-600' },
+  ABERTO: { label: 'Aberto', color: 'bg-warning-bg text-warning' },
+  CUMPRIDO: { label: 'Cumprido', color: 'bg-success-bg text-success' },
+  PERDIDO: { label: 'Perdido', color: 'bg-danger-bg text-danger' },
+  SUSPENSO: { label: 'Suspenso', color: 'bg-white/8 text-muted-foreground' },
 }
 
 function getDiasRestantes(dataFinal: string) {
@@ -42,8 +50,8 @@ interface Prazo {
   }
 }
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const inputClass = 'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-gold/30'
+const labelClass = 'mb-1 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground'
 
 export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
   const router = useRouter()
@@ -54,29 +62,42 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
   const [erro, setErro] = useState('')
 
   const [form, setForm] = useState({
-    titulo: '', tipo: 'OUTRO', dataInicio: '', dataFinal: '', status: 'ABERTO', observacoes: ''
+    titulo: '',
+    tipo: 'OUTRO',
+    dataInicio: '',
+    dataFinal: '',
+    status: 'ABERTO',
+    observacoes: '',
   })
 
-  const criticos = prazos.filter(p => {
-    const dias = getDiasRestantes(p.dataFinal)
-    return p.status === 'ABERTO' && dias <= 2
-  })
+  const criticos = useMemo(
+    () => prazos.filter((prazo) => prazo.status === 'ABERTO' && getDiasRestantes(prazo.dataFinal) <= 2),
+    [prazos]
+  )
+  const concluidos = useMemo(
+    () => prazos.filter((prazo) => prazo.status === 'CUMPRIDO').length,
+    [prazos]
+  )
+  const emAberto = useMemo(
+    () => prazos.filter((prazo) => prazo.status === 'ABERTO').length,
+    [prazos]
+  )
 
-  function abrirEditar(p: Prazo) {
+  function abrirEditar(prazo: Prazo) {
     setForm({
-      titulo: p.titulo,
-      tipo: p.tipo,
-      dataInicio: p.dataInicio.slice(0, 10),
-      dataFinal: p.dataFinal.slice(0, 10),
-      status: p.status,
-      observacoes: p.observacoes ?? '',
+      titulo: prazo.titulo,
+      tipo: prazo.tipo,
+      dataInicio: prazo.dataInicio.slice(0, 10),
+      dataFinal: prazo.dataFinal.slice(0, 10),
+      status: prazo.status,
+      observacoes: prazo.observacoes ?? '',
     })
-    setEditando(p)
+    setEditando(prazo)
     setErro('')
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   async function handleSalvar(e: React.FormEvent) {
@@ -84,18 +105,29 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
     if (!editando) return
     setLoading(true)
     setErro('')
+
     try {
       const res = await fetch(`/api/prazos/${editando.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+
       if (!res.ok) throw new Error()
-      setPrazos(prev => prev.map(p =>
-        p.id === editando.id
-          ? { ...p, ...form, dataInicio: new Date(form.dataInicio).toISOString(), dataFinal: new Date(form.dataFinal).toISOString() }
-          : p
-      ))
+
+      setPrazos((prev) =>
+        prev.map((prazo) =>
+          prazo.id === editando.id
+            ? {
+                ...prazo,
+                ...form,
+                dataInicio: new Date(form.dataInicio).toISOString(),
+                dataFinal: new Date(form.dataFinal).toISOString(),
+              }
+            : prazo
+        )
+      )
+
       setEditando(null)
       router.refresh()
     } catch {
@@ -107,143 +139,238 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
 
   async function handleDeletar(id: string) {
     if (!confirmandoDeletar[id]) {
-      setConfirmandoDeletar(prev => ({ ...prev, [id]: true }))
-      setTimeout(() => setConfirmandoDeletar(prev => { const n = { ...prev }; delete n[id]; return n }), 3000)
+      setConfirmandoDeletar((prev) => ({ ...prev, [id]: true }))
+      setTimeout(() => {
+        setConfirmandoDeletar((prev) => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+      }, 3000)
       return
     }
-    setConfirmandoDeletar(prev => { const n = { ...prev }; delete n[id]; return n })
+
+    setConfirmandoDeletar((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+
     const res = await fetch(`/api/prazos/${id}`, { method: 'DELETE' })
     if (res.ok) {
-      setPrazos(prev => prev.filter(p => p.id !== id))
+      setPrazos((prev) => prev.filter((prazo) => prazo.id !== id))
       router.refresh()
     }
   }
 
+  const miniCards = [
+    { icon: AlertTriangle, value: criticos.length, label: 'Críticos 48h', bg: 'rgba(239,68,68,0.15)', color: '#f87171', glow: 'rgba(239,68,68,0.2)', delay: 0 },
+    { icon: CalendarClock, value: emAberto,         label: 'Em aberto',   bg: 'rgba(245,158,11,0.15)', color: '#fbbf24', glow: 'rgba(245,158,11,0.2)', delay: 0.07 },
+    { icon: CheckCircle2, value: concluidos,         label: 'Cumpridos',   bg: 'rgba(16,185,129,0.15)', color: '#34d399', glow: 'rgba(16,185,129,0.2)', delay: 0.14 },
+  ]
+
   return (
-    <>
-      {criticos.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-          <AlertTriangle size={18} className="text-red-600 flex-shrink-0" />
-          <span className="text-sm text-red-700 font-medium">
-            {criticos.length} prazo{criticos.length !== 1 ? 's' : ''} vence{criticos.length === 1 ? '' : 'm'} nas próximas 48 horas. Verifique imediatamente!
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {miniCards.map(({ icon: Icon, value, label, bg, color, glow, delay }) => (
+          <motion.div
+            key={label}
+            className="glass-card hover-lift rounded-3xl p-5 cursor-default"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay, ease: [0.22,1,0.36,1] }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                style={{ background: bg, color, border: `1px solid ${color}30` }}
+                whileHover={{ scale: 1.12, rotate: 6, boxShadow: `0 0 20px ${glow}` }}
+                transition={{ type: 'spring', stiffness: 380, damping: 16 }}
+              >
+                <Icon size={20} />
+              </motion.div>
+              <div>
+                <motion.p
+                  className="text-2xl font-bold"
+                  style={{
+                    background: `linear-gradient(135deg, #FFFFFF, ${color})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                  initial={{ scale: 0.85 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: delay + 0.2, type: 'spring' }}
+                >
+                  {value}
+                </motion.p>
+                <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--text3)' }}>{label}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {criticos.length > 0 ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-danger/30 bg-danger/10 p-4">
+          <AlertTriangle size={18} className="shrink-0 text-danger" />
+          <span className="text-sm font-medium text-danger">
+            {criticos.length} prazo{criticos.length !== 1 ? 's' : ''} vence{criticos.length === 1 ? '' : 'm'} nas proximas 48 horas. Verifique imediatamente.
           </span>
         </div>
-      )}
+      ) : null}
 
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <GlassCard
+        title="Agenda de prazos"
+        badge={{ text: `${prazos.length} itens`, variant: 'gold' }}
+        action={
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
+            <Filter size={12} />
+            Ordenado por vencimento
+          </span>
+        }
+      >
         {prazos.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="text-gray-300 text-5xl mb-4">⏰</div>
-            <div className="text-gray-500 font-medium">Nenhum prazo cadastrado</div>
-            <div className="text-gray-400 text-sm mt-1">Clique em "Novo Prazo" para começar</div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-16 text-center">
+            <div className="mb-4 text-gold">
+              <CalendarClock className="mx-auto" size={32} />
+            </div>
+            <div className="font-medium text-foreground">Nenhum prazo cadastrado</div>
+            <div className="mt-1 text-sm text-muted-foreground">Use o botao Novo Prazo para comecar.</div>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Título / Processo</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Tipo</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Cliente</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Vencimento</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Restam</th>
-                <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {prazos.map((prazo) => {
-                const status = statusConfig[prazo.status]
-                const dias = getDiasRestantes(prazo.dataFinal)
-                const critico = prazo.status === 'ABERTO' && dias <= 2
-                const atencao = prazo.status === 'ABERTO' && dias > 2 && dias <= 5
-                const confirmando = !!confirmandoDeletar[prazo.id]
-                return (
-                  <tr
-                    key={prazo.id}
-                    className={`border-b border-gray-50 last:border-0 transition-colors ${critico ? 'bg-red-50' : atencao ? 'bg-amber-50' : 'hover:bg-gray-50'}`}
-                  >
-                    <td className="px-5 py-3">
-                      <div className="font-medium text-sm text-gray-900">{prazo.titulo}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        <Link href={`/processos/${prazo.processo.id}`} className="hover:underline text-green-700">
-                          {prazo.processo.numero || 'Sem número'}
-                        </Link>
+          <div className="space-y-4">
+            {prazos.map((prazo, index) => {
+              const status = statusConfig[prazo.status]
+              const dias = getDiasRestantes(prazo.dataFinal)
+              const critico = prazo.status === 'ABERTO' && dias <= 2
+              const atencao = prazo.status === 'ABERTO' && dias > 2 && dias <= 5
+              const confirmando = !!confirmandoDeletar[prazo.id]
+
+              return (
+                <motion.div
+                  key={prazo.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  className={cn(
+                    'rounded-3xl border p-5 transition-colors',
+                    critico ? 'border-danger/35 bg-danger/10' : atencao ? 'border-warning/30 bg-warning/10' : 'border-white/10 bg-white/5 hover:bg-white/7'
+                  )}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-sm font-semibold text-foreground">{prazo.titulo}</p>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}>{status.label}</span>
+                        <span className="rounded-full bg-white/8 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          {tipoPrazoLabels[prazo.tipo]}
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        {tipoPrazoLabels[prazo.tipo]}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{prazo.processo.cliente.nomeCompleto}</td>
-                    <td className={`px-5 py-3 text-sm font-medium ${critico ? 'text-red-700' : atencao ? 'text-amber-700' : 'text-gray-700'}`}>
-                      {new Date(prazo.dataFinal).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className={`px-5 py-3 text-sm font-bold ${critico ? 'text-red-700' : atencao ? 'text-amber-700' : 'text-gray-600'}`}>
-                      {prazo.status === 'ABERTO'
-                        ? dias < 0 ? 'Vencido' : dias === 0 ? 'Hoje!' : `${dias} dia${dias !== 1 ? 's' : ''}`
-                        : '—'}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-2">
+
+                      <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                        <p>
+                          Cliente: <span className="text-foreground">{prazo.processo.cliente.nomeCompleto}</span>
+                        </p>
+                        <p>
+                          Processo:{' '}
+                          <Link href={`/processos/${prazo.processo.id}`} className="font-medium text-gold hover:text-gold-light">
+                            {prazo.processo.numero || 'Sem numero'}
+                          </Link>
+                        </p>
+                        {prazo.observacoes ? <p className="text-xs text-muted-foreground">{prazo.observacoes}</p> : null}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 lg:items-end">
+                      <div className="text-right">
+                        <p className={cn('text-lg font-semibold', critico ? 'text-danger' : atencao ? 'text-warning' : 'text-foreground')}>
+                          {new Date(prazo.dataFinal).toLocaleDateString('pt-BR')}
+                        </p>
+                        <p className={cn('text-xs font-medium', critico ? 'text-danger' : atencao ? 'text-warning' : 'text-muted-foreground')}>
+                          {prazo.status === 'ABERTO'
+                            ? dias < 0
+                              ? 'Vencido'
+                              : dias === 0
+                                ? 'Hoje'
+                                : `${dias} dia${dias !== 1 ? 's' : ''}`
+                            : 'Concluido'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => abrirEditar(prazo)}
                           title="Editar"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors"
+                          className="rounded-2xl border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:border-gold/30 hover:bg-white/10 hover:text-gold"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={() => handleDeletar(prazo.id)}
-                          title={confirmando ? 'Clique para confirmar exclusão' : 'Excluir'}
-                          className={`p-1.5 rounded-lg transition-colors text-xs font-medium ${
+                          title={confirmando ? 'Clique para confirmar exclusao' : 'Excluir'}
+                          className={cn(
+                            'rounded-2xl border px-3 py-2 text-xs font-semibold transition-colors',
                             confirmando
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200 px-2'
-                              : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                          }`}
+                              ? 'border-danger/40 bg-danger/15 text-danger'
+                              : 'border-white/10 bg-white/5 text-muted-foreground hover:border-danger/30 hover:bg-danger/10 hover:text-danger'
+                          )}
                         >
                           {confirmando ? 'Confirmar?' : <Trash2 size={14} />}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
         )}
-      </div>
+      </GlassCard>
 
-      {/* Modal de edição */}
-      {editando && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">Editar Prazo</h2>
-              <button onClick={() => setEditando(null)} className="text-gray-400 hover:text-gray-600">
+      {editando ? (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="w-full max-w-lg rounded-[2rem] shadow-2xl"
+            style={{
+              background: 'rgba(18,18,18,0.97)',
+              backdropFilter: 'blur(28px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+            }}
+            initial={{ scale: 0.94, y: 16, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.94, y: 16, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+              <h2 className="text-base font-semibold text-white">Editar prazo</h2>
+              <button onClick={() => setEditando(null)} className="text-muted-foreground hover:text-white">
                 <X size={18} />
               </button>
             </div>
+
             <form onSubmit={handleSalvar} className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className={labelClass}>Título *</label>
+                  <label className={labelClass}>Titulo *</label>
                   <input name="titulo" value={form.titulo} onChange={handleChange} className={inputClass} required />
                 </div>
                 <div>
                   <label className={labelClass}>Tipo</label>
                   <select name="tipo" value={form.tipo} onChange={handleChange} className={inputClass}>
                     <option value="RECURSO">Recurso</option>
-                    <option value="CONTESTACAO">Contestação</option>
-                    <option value="MANIFESTACAO">Manifestação</option>
-                    <option value="REPLICA">Réplica</option>
-                    <option value="APELACAO">Apelação</option>
-                    <option value="CONTRARRAZOES">Contrarrazões</option>
+                    <option value="CONTESTACAO">Contestacao</option>
+                    <option value="MANIFESTACAO">Manifestacao</option>
+                    <option value="REPLICA">Replica</option>
+                    <option value="APELACAO">Apelacao</option>
+                    <option value="CONTRARRAZOES">Contrarrazoes</option>
                     <option value="EMBARGOS">Embargos</option>
                     <option value="OUTRO">Outro</option>
                   </select>
@@ -258,31 +385,41 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Data de Início *</label>
+                  <label className={labelClass}>Data de inicio *</label>
                   <input type="date" name="dataInicio" value={form.dataInicio} onChange={handleChange} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Data Final *</label>
+                  <label className={labelClass}>Data final *</label>
                   <input type="date" name="dataFinal" value={form.dataFinal} onChange={handleChange} className={inputClass} required />
                 </div>
                 <div className="col-span-2">
-                  <label className={labelClass}>Observações</label>
+                  <label className={labelClass}>Observacoes</label>
                   <textarea name="observacoes" value={form.observacoes} onChange={handleChange} className={inputClass} rows={2} />
                 </div>
               </div>
-              {erro && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">{erro}</div>}
-              <div className="flex gap-3 mt-6">
-                <button type="button" onClick={() => setEditando(null)} className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+
+              {erro ? <div className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{erro}</div> : null}
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditando(null)}
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-white/10"
+                >
                   Cancelar
                 </button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 rounded-2xl bg-gold px-4 py-2.5 text-sm font-medium text-black hover:bg-gold-light disabled:opacity-50"
+                >
                   {loading ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-    </>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </div>
   )
 }

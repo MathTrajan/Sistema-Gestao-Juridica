@@ -95,9 +95,10 @@ export default auth((req) => {
   }
 
   const isLoggedIn = !!req.auth
+  const isStaticAsset = /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|json|txt|map|xml|webmanifest|woff2?|eot|ttf|otf)$/i.test(pathname)
   const isPublic = pathname.startsWith('/login') || pathname.startsWith('/api/auth')
 
-  if (isPublic) return NextResponse.next()
+  if (isPublic || isStaticAsset) return NextResponse.next()
 
   if (!isLoggedIn) {
     return NextResponse.redirect(new URL('/login', req.url))

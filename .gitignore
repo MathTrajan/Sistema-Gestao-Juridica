@@ -2,27 +2,27 @@
 .vercel/
 
 # Node
-jurisflow/node_modules/
-jurisflow/.next/
-jurisflow/out/
-jurisflow/build/
-jurisflow/.vercel/
+norma/node_modules/
+norma/.next/
+norma/out/
+norma/build/
+norma/.vercel/
 
 # Environment — never commit real credentials
-jurisflow/.env
-jurisflow/.env.local
-jurisflow/.env.*.local
+norma/.env
+norma/.env.local
+norma/.env.*.local
 
 # Prisma generated client
-jurisflow/src/generated/
+norma/src/generated/
 
 # TypeScript build info
-jurisflow/*.tsbuildinfo
-jurisflow/next-env.d.ts
+norma/*.tsbuildinfo
+norma/next-env.d.ts
 
 # Claude Code internal files
-jurisflow/CLAUDE.md
-jurisflow/AGENTS.md
+norma/CLAUDE.md
+norma/AGENTS.md
 
 # Logs
 *.log

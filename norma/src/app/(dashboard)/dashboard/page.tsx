@@ -1,34 +1,49 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Users, FileText, CheckSquare, Clock } from 'lucide-react'
 import Link from 'next/link'
-
-const areaLabels: Record<string, string> = {
-  TRABALHISTA: 'Trabalhista', CIVIL: 'Cível', TRIBUTARIO: 'Tributário',
-  PREVIDENCIARIO: 'Previdenciário', CRIMINAL: 'Criminal', FAMILIA: 'Família',
-  EMPRESARIAL: 'Empresarial', CONSUMIDOR: 'Consumidor', AMBIENTAL: 'Ambiental', OUTRO: 'Outro',
-}
-
-const statusBadge: Record<string, { label: string; bg: string; color: string }> = {
-  ATIVO:                  { label: 'Ativo',         bg: 'var(--accent-light)', color: 'var(--accent2)' },
-  INATIVO:                { label: 'Inativo',        bg: 'var(--surface2)',     color: 'var(--text2)'   },
-  PROSPECTO:              { label: 'Prospecto',      bg: 'var(--blue-light)',   color: 'var(--blue)'    },
-  DOCUMENTACAO_PENDENTE:  { label: 'Doc. Pendente',  bg: 'var(--amber-light)', color: 'var(--amber)'   },
-}
-
-const prioridadeBadge: Record<string, { label: string; bg: string; color: string }> = {
-  URGENTE: { label: 'Urgente', bg: 'var(--red-light)',   color: 'var(--red)'   },
-  ALTA:    { label: 'Alta',    bg: 'var(--amber-light)', color: 'var(--amber)' },
-  NORMAL:  { label: 'Normal',  bg: 'var(--surface2)',    color: 'var(--text2)' },
-  BAIXA:   { label: 'Baixa',   bg: 'var(--blue-light)',  color: 'var(--blue)'  },
-}
+import { Users, FileText, CheckSquare, Clock } from 'lucide-react'
+import { GlassCard } from '@/components/dashboard/glass-card'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { AnimatedChart } from '@/components/dashboard/animated-chart'
+import { AnimatedProgress } from '@/components/dashboard/animated-progress'
+import { ParticlesBackground } from '@/components/dashboard/particles-background'
 
 const periodoOptions = [
-  { value: 'este-mes',        label: 'Este mês' },
-  { value: 'ultimos-3-meses', label: 'Últimos 3 meses' },
-  { value: 'este-ano',        label: 'Este ano' },
-  { value: 'tudo',            label: 'Todo período' },
+  { value: 'este-mes', label: 'Este mes' },
+  { value: 'ultimos-3-meses', label: 'Ultimos 3 meses' },
+  { value: 'este-ano', label: 'Este ano' },
+  { value: 'tudo', label: 'Todo periodo' },
 ]
+
+const periodoLabel: Record<string, string> = {
+  'este-mes': 'este mes',
+  'ultimos-3-meses': 'ultimos 3 meses',
+  'este-ano': 'este ano',
+  tudo: 'todo periodo',
+}
+
+const statusLabelMap: Record<string, string> = {
+  EM_ANDAMENTO: 'Em andamento',
+  AGUARDANDO_PECA: 'Aguardando peca',
+  AGUARDANDO_CLIENTE: 'Aguardando cliente',
+  SUSPENSO: 'Suspenso',
+  ENCERRADO_PROCEDENTE: 'Encerrado procedente',
+  ENCERRADO_IMPROCEDENTE: 'Encerrado improcedente',
+  ARQUIVADO: 'Arquivado',
+}
+
+const areaLabels: Record<string, string> = {
+  TRABALHISTA: 'Trabalhista',
+  CIVIL: 'Civel',
+  TRIBUTARIO: 'Tributario',
+  PREVIDENCIARIO: 'Previdenciario',
+  CRIMINAL: 'Criminal',
+  FAMILIA: 'Familia',
+  EMPRESARIAL: 'Empresarial',
+  CONSUMIDOR: 'Consumidor',
+  AMBIENTAL: 'Ambiental',
+  OUTRO: 'Outro',
+}
 
 function getPeriodoInicio(periodo: string): Date {
   const agora = new Date()
@@ -52,15 +67,93 @@ function getDiasRestantes(data: Date) {
   return Math.ceil((final.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-async function getDashboardData(escritorioId: string, periodo: string) {
+function getChartMonths() {
+  const agora = new Date()
+  return Array.from({ length: 6 }).map((_, index) => {
+    const date = new Date(agora.getFullYear(), agora.getMonth() - 5 + index, 1)
+    const label = date.toLocaleString('pt-BR', { month: 'short' })
+    return {
+      label: label.charAt(0).toUpperCase() + label.slice(1),
+      start: date,
+      end: new Date(date.getFullYear(), date.getMonth() + 1, 1),
+    }
+  })
+}
+
+type DashboardData = {
+  totalClientes: number
+  totalProcessos: number
+  totalTarefas: number
+  prazosAbertos: number
+  processosNovos: number
+  clientesNovos: number
+  prazosUrgentes: Array<{
+    id: string
+    titulo: string | null
+    dataFinal: Date
+    processo: {
+      numero: string | null
+      cliente: { nomeCompleto: string } | null
+    }
+  }>
+  clientesRecentes: Array<{
+    id: string
+    nomeCompleto: string
+    areaJuridica: string | null
+    _count: { processos: number }
+  }>
+  tarefasPendentes: Array<{
+    id: string
+    titulo: string
+    responsavel: { nome: string } | null
+  }>
+  monthlyProcessos: Array<{ month: string; value: number }>
+  statusSummary: Array<{ label: string; count: number; variant: 'gold' | 'warning' | 'info' | 'danger' }>
+}
+
+async function getDashboardData(escritorioId: string, periodo: string): Promise<DashboardData> {
   const agora = new Date()
   const inicio = getPeriodoInicio(periodo)
   const limite48h = new Date(agora.getTime() + 48 * 60 * 60 * 1000)
 
+  const months = getChartMonths()
+  const monthlyCounts = await Promise.all(
+    months.map((month) =>
+      prisma.processo.count({
+        where: { escritorioId, createdAt: { gte: month.start, lt: month.end } },
+      })
+    )
+  )
+
+  const processosStatus = await prisma.processo.groupBy({
+    by: ['status'],
+    where: { escritorioId },
+    _count: { _all: true },
+  })
+
+  const statusSummary = processosStatus.map((item) => ({
+    label: statusLabelMap[item.status] ?? item.status,
+    count: item._count._all,
+    variant:
+      item.status === 'EM_ANDAMENTO'
+        ? 'gold'
+        : item.status === 'AGUARDANDO_CLIENTE' || item.status === 'AGUARDANDO_PECA'
+          ? 'warning'
+          : item.status === 'SUSPENSO'
+            ? 'info'
+            : 'danger',
+  }))
+
   const [
-    totalClientes, totalProcessos, totalTarefas, prazosAbertos,
-    processosNovos, clientesNovos,
-    prazosUrgentes, clientesRecentes, tarefasPendentes,
+    totalClientes,
+    totalProcessos,
+    totalTarefas,
+    prazosAbertos,
+    processosNovos,
+    clientesNovos,
+    prazosUrgentes,
+    clientesRecentes,
+    tarefasPendentes,
   ] = await Promise.all([
     prisma.cliente.count({ where: { escritorioId, status: 'ATIVO' } }),
     prisma.processo.count({ where: { escritorioId, status: 'EM_ANDAMENTO' } }),
@@ -75,7 +168,7 @@ async function getDashboardData(escritorioId: string, periodo: string) {
       include: {
         processo: {
           select: {
-            id: true, numero: true, areaJuridica: true,
+            numero: true,
             cliente: { select: { nomeCompleto: true } },
           },
         },
@@ -86,7 +179,9 @@ async function getDashboardData(escritorioId: string, periodo: string) {
       orderBy: { createdAt: 'desc' },
       take: 6,
       select: {
-        id: true, nomeCompleto: true, areaJuridica: true, status: true,
+        id: true,
+        nomeCompleto: true,
+        areaJuridica: true,
         _count: { select: { processos: true } },
       },
     }),
@@ -99,23 +194,36 @@ async function getDashboardData(escritorioId: string, periodo: string) {
   ])
 
   return {
-    totalClientes, totalProcessos, totalTarefas, prazosAbertos,
-    processosNovos, clientesNovos, prazosUrgentes, clientesRecentes, tarefasPendentes,
+    totalClientes,
+    totalProcessos,
+    totalTarefas,
+    prazosAbertos,
+    processosNovos,
+    clientesNovos,
+    prazosUrgentes,
+    clientesRecentes,
+    tarefasPendentes,
+    monthlyProcessos: months.map((month, index) => ({ month: month.label, value: monthlyCounts[index] })),
+    statusSummary,
   }
 }
 
-const card = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow)',
-} as const
+function getEmptyDashboardData(): DashboardData {
+  const months = getChartMonths()
 
-const periodoLabel: Record<string, string> = {
-  'este-mes': 'este mês',
-  'ultimos-3-meses': 'últimos 3 meses',
-  'este-ano': 'este ano',
-  'tudo': 'todo período',
+  return {
+    totalClientes: 0,
+    totalProcessos: 0,
+    totalTarefas: 0,
+    prazosAbertos: 0,
+    processosNovos: 0,
+    clientesNovos: 0,
+    prazosUrgentes: [],
+    clientesRecentes: [],
+    tarefasPendentes: [],
+    monthlyProcessos: months.map((month) => ({ month: month.label, value: 0 })),
+    statusSummary: [],
+  }
 }
 
 export default async function DashboardPage({
@@ -124,214 +232,218 @@ export default async function DashboardPage({
   searchParams: Promise<{ periodo?: string }>
 }) {
   const { periodo: rawPeriodo } = await searchParams
-  const periodo = periodoOptions.find(o => o.value === rawPeriodo)?.value ?? 'este-mes'
+  const periodo = periodoOptions.find((option) => option.value === rawPeriodo)?.value ?? 'este-mes'
 
   const session = await auth()
-  const escritorioId = (session?.user as any)?.escritorioId
-  const data = await getDashboardData(escritorioId, periodo)
+  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const escritorioId = userData?.escritorioId ?? ''
 
-  const stats = [
+  let data = getEmptyDashboardData()
+  let databaseUnavailable = false
+
+  try {
+    data = await getDashboardData(escritorioId, periodo)
+  } catch {
+    databaseUnavailable = true
+  }
+
+  const cardStats = [
     {
-      label: 'Processos Ativos',
+      label: 'Processos ativos',
       value: data.totalProcessos,
       icon: FileText,
-      iconBg: 'var(--accent-light)', iconColor: 'var(--accent2)',
-      sub: data.processosNovos > 0 ? `↑ ${data.processosNovos} em ${periodoLabel[periodo]}` : `Nenhum novo em ${periodoLabel[periodo]}`,
+      iconColor: 'gold' as const,
+      sub: data.processosNovos > 0 ? `+ ${data.processosNovos} em ${periodoLabel[periodo]}` : `Nenhum novo em ${periodoLabel[periodo]}`,
+      trend: data.processosNovos > 0 ? ('positive' as const) : ('neutral' as const),
+      progress: data.totalProcessos > 0 ? Math.min(Math.round((data.processosNovos / Math.max(data.totalProcessos, 1)) * 100 + 40), 100) : 0,
+      badge: data.processosNovos > 0 ? { text: 'Ativo', variant: 'success' as const } : undefined,
     },
     {
-      label: 'Clientes Ativos',
+      label: 'Clientes ativos',
       value: data.totalClientes,
       icon: Users,
-      iconBg: 'var(--blue-light)', iconColor: 'var(--blue)',
-      sub: data.clientesNovos > 0 ? `↑ ${data.clientesNovos} em ${periodoLabel[periodo]}` : `Nenhum novo em ${periodoLabel[periodo]}`,
+      iconColor: 'blue' as const,
+      sub: data.clientesNovos > 0 ? `+ ${data.clientesNovos} em ${periodoLabel[periodo]}` : `Nenhum novo em ${periodoLabel[periodo]}`,
+      trend: data.clientesNovos > 0 ? ('positive' as const) : ('neutral' as const),
+      progress: data.totalClientes > 0 ? 78 : 0,
+      badge: data.totalClientes > 0 ? { text: 'Ativos', variant: 'success' as const } : undefined,
     },
     {
-      label: 'Prazos Críticos',
+      label: 'Prazos criticos',
       value: data.prazosUrgentes.length,
       icon: Clock,
-      iconBg: 'var(--red-light)', iconColor: 'var(--red)',
-      valueColor: data.prazosUrgentes.length > 0 ? 'var(--red)' : undefined,
-      sub: 'Próximas 48h',
+      iconColor: 'red' as const,
+      sub: 'Proximas 48h',
+      trend: data.prazosUrgentes.length > 0 ? ('negative' as const) : ('neutral' as const),
+      progress: data.prazosUrgentes.length > 0 ? 88 : 0,
+      badge: data.prazosUrgentes.length > 0 ? { text: 'Urgente', variant: 'danger' as const } : { text: 'OK', variant: 'success' as const },
     },
     {
-      label: 'Tarefas Abertas',
+      label: 'Tarefas abertas',
       value: data.totalTarefas,
       icon: CheckSquare,
-      iconBg: 'var(--gold-light)', iconColor: 'var(--gold)',
+      iconColor: 'green' as const,
       sub: `${data.prazosAbertos} prazo${data.prazosAbertos !== 1 ? 's' : ''} em aberto`,
+      trend: 'neutral' as const,
+      progress: data.totalTarefas > 0 ? 65 : 0,
+      badge: data.totalTarefas > 0 ? { text: 'Em andamento', variant: 'warning' as const } : undefined,
     },
   ]
 
   return (
-    <div style={{ padding: '28px' }}>
+    <div className="page-enter relative min-h-[calc(100vh-60px)] overflow-hidden pb-16">
+      <ParticlesBackground />
+      <div className="relative z-10 px-6 py-8 xl:px-10">
+        {databaseUnavailable ? (
+          <div className="mb-6 rounded-3xl border border-danger/30 bg-danger/10 px-5 py-4 text-sm text-danger">
+            Nao foi possivel carregar os dados do dashboard porque a conexao com o banco esta indisponivel no momento.
+          </div>
+        ) : null}
 
-      {/* Filtro de período */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
-        {periodoOptions.map(o => (
-          <Link
-            key={o.value}
-            href={`/dashboard?periodo=${o.value}`}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 500,
-              textDecoration: 'none',
-              background: periodo === o.value ? 'var(--accent2)' : 'var(--surface)',
-              color: periodo === o.value ? '#fff' : 'var(--text2)',
-              border: `1px solid ${periodo === o.value ? 'var(--accent2)' : 'var(--border)'}`,
-              transition: 'all 0.15s',
-            }}
-          >
-            {o.label}
-          </Link>
-        ))}
-      </div>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.32em] text-muted-foreground">Painel de controle</p>
+            <h1 className="mt-3 text-3xl font-semibold text-foreground">Resumo operacional</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {periodoOptions.map((option) => (
+              <Link
+                key={option.value}
+                href={`/dashboard?periodo=${option.value}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  periodo === option.value ? 'bg-gold text-black shadow-lg shadow-gold/15' : 'bg-white/5 text-foreground hover:bg-white/10'
+                }`}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
+        </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '24px' }}>
-        {stats.map(s => {
-          const Icon = s.icon
-          return (
-            <div key={s.label} style={{ ...card, padding: '20px' }}>
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '10px', marginBottom: '12px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: s.iconBg, color: s.iconColor,
-              }}>
-                <Icon size={18} />
-              </div>
-              <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {s.label}
-              </div>
-              <div style={{ fontSize: '28px', fontWeight: 600, color: s.valueColor ?? 'var(--text)', margin: '6px 0 4px', lineHeight: 1 }}>
-                {s.value}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text3)' }}>{s.sub}</div>
-            </div>
-          )
-        })}
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {cardStats.map((item, index) => (
+            <StatCard
+              key={item.label}
+              icon={<item.icon size={18} />}
+              label={item.label}
+              value={item.value}
+              sub={item.sub}
+              trend={item.trend}
+              iconColor={item.iconColor}
+              index={index}
+              progress={item.progress}
+              badge={item.badge}
+            />
+          ))}
+        </div>
 
-      {/* grid-main-aside */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+        <div className="mt-8 grid gap-6 xl:grid-cols-[1.9fr_1fr]">
+          <GlassCard title="Processos criados" badge={{ text: 'Ultimos 6 meses', variant: 'gold' }}>
+            <AnimatedChart data={data.monthlyProcessos} />
+          </GlassCard>
 
-        {/* Coluna principal */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="flex flex-col gap-6">
+            <GlassCard title="Distribuicao de processos" badge={{ text: 'Status', variant: 'blue' }}>
+              {data.statusSummary.length === 0 ? (
+                <div className="rounded-3xl bg-white/5 p-6 text-center text-sm text-muted-foreground">
+                  Sem dados disponiveis para distribuicao de processos.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.statusSummary.map((item) => (
+                    <AnimatedProgress
+                      key={item.label}
+                      value={item.count}
+                      max={Math.max(data.totalProcessos, 1)}
+                      label={item.label}
+                      showPercentage
+                      variant={item.variant}
+                    />
+                  ))}
+                </div>
+              )}
+            </GlassCard>
 
-          {/* Prazos Críticos */}
-          <div style={card}>
-            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Prazos Críticos</span>
-              {data.prazosUrgentes.length > 0 && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, background: 'var(--red-light)', color: 'var(--red)' }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
-                  {data.prazosUrgentes.length} urgente{data.prazosUrgentes.length !== 1 ? 's' : ''}
-                </span>
+            <GlassCard
+              title="Prazos urgentes"
+              badge={{ text: `${data.prazosUrgentes.length} agora`, variant: data.prazosUrgentes.length > 0 ? 'red' : 'green' }}
+            >
+              {data.prazosUrgentes.length === 0 ? (
+                <div className="rounded-3xl bg-white/5 p-6 text-center text-sm text-muted-foreground">
+                  Nenhum prazo urgente nas proximas 48 horas.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.prazosUrgentes.map((prazo) => {
+                    const dias = getDiasRestantes(prazo.dataFinal)
+                    const statusLabel = dias < 0 ? 'Vencido' : dias === 0 ? 'Hoje' : dias === 1 ? 'Amanha' : `${dias} dias`
+
+                    return (
+                      <div key={prazo.id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{prazo.titulo || 'Prazo sem titulo'}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Processo {prazo.processo.numero || 'Sem numero'} - {prazo.processo.cliente?.nomeCompleto ?? 'Cliente nao informado'}
+                            </p>
+                          </div>
+                          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${dias <= 1 ? 'bg-danger text-white' : 'bg-warning text-black'}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <GlassCard title="Ultimos clientes cadastrados" badge={{ text: 'Recente', variant: 'amber' }}>
+            <div className="space-y-4">
+              {data.clientesRecentes.length === 0 ? (
+                <div className="rounded-3xl bg-white/5 p-6 text-center text-sm text-muted-foreground">Nenhum cliente recente disponivel.</div>
+              ) : (
+                data.clientesRecentes.map((cliente) => (
+                  <div key={cliente.id} className="flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div>
+                      <p className="font-semibold text-foreground">{cliente.nomeCompleto}</p>
+                      <p className="text-xs text-muted-foreground">{areaLabels[cliente.areaJuridica ?? 'OUTRO']}</p>
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">{cliente._count.processos} processos</span>
+                  </div>
+                ))
               )}
             </div>
-            {data.prazosUrgentes.length === 0 ? (
-              <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>
-                Nenhum prazo urgente nas próximas 48h
-              </div>
-            ) : data.prazosUrgentes.map(prazo => {
-              const dias = getDiasRestantes(prazo.dataFinal)
-              const critico = dias <= 0
-              const cor = critico ? 'var(--red)' : 'var(--amber)'
-              const bg  = critico ? 'var(--red-light)' : 'var(--amber-light)'
-              const label = dias < 0 ? 'Vencido' : dias === 0 ? 'Hoje' : dias === 1 ? 'Amanhã' : `${dias}d`
-              return (
-                <div key={prazo.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface2)', borderLeft: `3px solid ${cor}`, background: bg }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: cor }}>
-                        {prazo.titulo} — {prazo.processo.numero || 'Sem nº'}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '2px' }}>
-                        {prazo.processo.cliente.nomeCompleto}
-                        {prazo.processo.areaJuridica ? ` · ${areaLabels[prazo.processo.areaJuridica] ?? prazo.processo.areaJuridica}` : ''}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: cor }}>{label}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text3)' }}>
-                        {new Date(prazo.dataFinal).toLocaleDateString('pt-BR')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          </GlassCard>
 
-          {/* Clientes Recentes */}
-          <div style={card}>
-            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Clientes — {periodoLabel[periodo]}</span>
-              <Link href="/clientes" style={{ fontSize: '12px', color: 'var(--accent2)', fontWeight: 500, textDecoration: 'none' }}>Ver todos</Link>
+          <GlassCard title="Acompanhamento rapido" badge={{ text: 'Visao geral', variant: 'green' }}>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Tarefas em aberto</p>
+                  <p className="text-xs text-muted-foreground">Atualizado em tempo real</p>
+                </div>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-muted-foreground">{data.totalTarefas} itens</span>
+              </div>
+              <AnimatedProgress value={data.totalTarefas} max={Math.max(data.totalTarefas, 10)} label="Capacidade de resposta" showPercentage variant="info" />
+              <div className="space-y-3">
+                {data.tarefasPendentes.length === 0 ? (
+                  <div className="rounded-3xl bg-white/5 p-6 text-center text-sm text-muted-foreground">Nenhuma tarefa em aberto disponivel.</div>
+                ) : (
+                  data.tarefasPendentes.slice(0, 4).map((tarefa) => (
+                    <div key={tarefa.id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="font-semibold text-foreground">{tarefa.titulo}</p>
+                      <p className="text-xs text-muted-foreground">Responsavel: {tarefa.responsavel?.nome ?? 'Nao atribuido'}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            {data.clientesRecentes.length === 0 ? (
-              <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>
-                Nenhum cliente neste período
-              </div>
-            ) : data.clientesRecentes.map(c => {
-              const s = statusBadge[c.status]
-              return (
-                <div key={c.id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{c.nomeCompleto}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '2px' }}>
-                      {c.areaJuridica ? areaLabels[c.areaJuridica] : '—'} · {c._count.processos} processo{c._count.processos !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  {s && (
-                    <span style={{ fontSize: '11px', fontWeight: 500, padding: '3px 8px', borderRadius: '20px', background: s.bg, color: s.color, whiteSpace: 'nowrap' }}>
-                      {s.label}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          </GlassCard>
         </div>
-
-        {/* Aside — Tarefas Pendentes */}
-        <div style={{ ...card, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Tarefas Pendentes</span>
-            <Link href="/tarefas" style={{ fontSize: '12px', color: 'var(--accent2)', fontWeight: 500, textDecoration: 'none' }}>Ver todas</Link>
-          </div>
-          {data.tarefasPendentes.length === 0 ? (
-            <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>
-              Nenhuma tarefa pendente
-            </div>
-          ) : data.tarefasPendentes.map(t => {
-            const p = prioridadeBadge[t.prioridade]
-            return (
-              <div key={t.id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--surface2)' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '6px', lineHeight: 1.4 }}>
-                  {t.titulo}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  {p && (
-                    <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px', background: p.bg, color: p.color }}>
-                      {p.label}
-                    </span>
-                  )}
-                  {t.responsavel && (
-                    <span style={{ fontSize: '11px', color: 'var(--text3)' }}>{t.responsavel.nome}</span>
-                  )}
-                  {t.dataVencimento && (
-                    <span style={{ fontSize: '11px', color: 'var(--text3)', marginLeft: 'auto' }}>
-                      {new Date(t.dataVencimento).toLocaleDateString('pt-BR')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
       </div>
     </div>
   )
