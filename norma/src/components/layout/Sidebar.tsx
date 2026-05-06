@@ -264,7 +264,7 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
       {/* Sidebar */}
       <motion.aside
         className={cn(
-          'fixed bottom-0 left-0 top-0 z-50 flex flex-col overflow-hidden',
+          'fixed bottom-0 left-0 top-0 z-50 flex flex-col',
           'transition-transform duration-300',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
@@ -343,7 +343,7 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
         </div>
 
         {/* ── Nav ──────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: collapsed ? '12px 0' : '12px' }}>
+        <div className="flex-1 overflow-y-auto" style={{ padding: collapsed ? '12px 0' : '12px' }}>
 
           <SectionLabel collapsed={collapsed}>Principal</SectionLabel>
           <div className={cn('flex flex-col', collapsed ? 'gap-1 items-center' : 'gap-0.5')}>

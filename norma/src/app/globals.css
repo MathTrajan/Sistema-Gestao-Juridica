@@ -348,6 +348,13 @@ input,
 textarea,
 select {
   color: var(--text);
+  color-scheme: dark;
+}
+
+:root.light input,
+:root.light textarea,
+:root.light select {
+  color-scheme: light;
 }
 
 /* Previne browser autofill de sobrescrever fundo escuro nos inputs */

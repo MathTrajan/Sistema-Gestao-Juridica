@@ -5,11 +5,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { clienteSchema, type ClienteFormData } from '@/lib/schemas'
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const inputErrorClass = "w-full border border-red-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
-const sectionClass = "bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-5"
-const errMsgClass = "text-xs text-red-600 mt-1"
+const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
+const inputErrorClass = "w-full rounded-lg border border-red-400/60 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-red-400/80"
+const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
+const sectionClass = "rounded-xl border border-white/10 bg-white/5 p-6 mb-5"
+const errMsgClass = "text-xs text-red-400 mt-1"
 
 const areaOptions = [
   { value: 'TRABALHISTA', label: 'Trabalhista' },
@@ -110,22 +110,22 @@ export default function ClienteForm() {
 
       {/* Tipo */}
       <div className={sectionClass}>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Tipo de Cliente</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Tipo de Cliente</h2>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" value="PESSOA_FISICA" {...register('tipo')} className="accent-green-700" />
-            <span className="text-sm text-gray-700">Pessoa Física</span>
+            <input type="radio" value="PESSOA_FISICA" {...register('tipo')} className="accent-[#B8962A]" />
+            <span className="text-sm text-foreground">Pessoa Física</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" value="PESSOA_JURIDICA" {...register('tipo')} className="accent-green-700" />
-            <span className="text-sm text-gray-700">Pessoa Jurídica</span>
+            <input type="radio" value="PESSOA_JURIDICA" {...register('tipo')} className="accent-[#B8962A]" />
+            <span className="text-sm text-foreground">Pessoa Jurídica</span>
           </label>
         </div>
       </div>
 
       {/* Dados Pessoais */}
       <div className={sectionClass}>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Dados Pessoais</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Dados Pessoais</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className={labelClass}>Nome Completo *</label>
@@ -168,7 +168,7 @@ export default function ClienteForm() {
 
       {/* Contato */}
       <div className={sectionClass}>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Contato</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Contato</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>E-mail</label>
@@ -192,7 +192,7 @@ export default function ClienteForm() {
 
       {/* Endereço */}
       <div className={sectionClass}>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Endereço</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Endereço</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>CEP</label>
@@ -237,7 +237,7 @@ export default function ClienteForm() {
 
       {/* Dados do Caso */}
       <div className={sectionClass}>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Dados do Caso</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Dados do Caso</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Área Jurídica</label>
@@ -274,7 +274,7 @@ export default function ClienteForm() {
       </div>
 
       {errors.root && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+        <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3 mb-4">
           {errors.root.message}
         </div>
       )}
@@ -283,14 +283,15 @@ export default function ClienteForm() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-5 py-2 text-sm font-medium text-muted-foreground border border-white/10 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-5 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          className="px-5 py-2 text-sm font-semibold text-black rounded-lg transition-all disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
         >
           {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
         </button>

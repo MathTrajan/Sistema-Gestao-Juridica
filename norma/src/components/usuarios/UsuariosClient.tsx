@@ -24,9 +24,9 @@ interface Props {
 }
 
 const perfilConfig: Record<string, { label: string; color: string; icon: any }> = {
-  GESTOR_GERAL: { label: 'Gestor Geral', color: 'bg-purple-100 text-purple-800', icon: Shield },
-  GERENTE: { label: 'Gerente', color: 'bg-blue-100 text-blue-800', icon: Users },
-  COLABORADOR: { label: 'Colaborador', color: 'bg-gray-100 text-gray-700', icon: Briefcase },
+  GESTOR_GERAL: { label: 'Gestor Geral', color: 'bg-purple-400/15 text-purple-400', icon: Shield },
+  GERENTE: { label: 'Gerente', color: 'bg-blue-400/15 text-blue-400', icon: Users },
+  COLABORADOR: { label: 'Colaborador', color: 'bg-white/8 text-muted-foreground', icon: Briefcase },
 }
 
 const areaOptions = [
@@ -38,8 +38,8 @@ const areaOptions = [
   { value: 'MARKETING', label: 'Marketing' },
 ]
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
+const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
 
 export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabels, areaLabels }: Props) {
   const router = useRouter()
@@ -144,122 +144,125 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
   return (
     <>
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-5 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">{usuarios.length}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Total de usuários</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="text-2xl font-bold text-foreground">{usuarios.length}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Total de usuários</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="text-2xl font-bold text-green-700">{ativos.length}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Ativos</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="text-2xl font-bold text-emerald-400">{ativos.length}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Ativos</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="text-2xl font-bold text-gray-400">{inativos.length}</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Inativos</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="text-2xl font-bold text-muted-foreground">{inativos.length}</div>
+          <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide font-medium">Inativos</div>
         </div>
       </div>
 
       {/* Tabela */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <span className="font-semibold text-gray-900 text-sm">Equipe</span>
+      <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <span className="font-semibold text-foreground text-sm">Equipe</span>
           <button
             onClick={abrirNovo}
-            className="flex items-center gap-2 bg-green-800 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-all hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
           >
             <Plus size={14} />
             Novo Usuário
           </button>
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Usuário</th>
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Perfil</th>
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Área</th>
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">OAB</th>
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Status</th>
-              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-3">Desde</th>
-              <th className="px-5 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map(u => {
-              const perfil = perfilConfig[u.perfil]
-              const Icon = perfil?.icon
-              const ehVoce = u.id === sessaoId
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px]">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Usuário</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Perfil</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden md:table-cell">Área</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden lg:table-cell">OAB</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3">Status</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.24em] px-5 py-3 hidden sm:table-cell">Desde</th>
+                <th className="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map(u => {
+                const perfil = perfilConfig[u.perfil]
+                const Icon = perfil?.icon
+                const ehVoce = u.id === sessaoId
 
-              return (
-                <tr key={u.id} className={`border-b border-gray-50 last:border-0 transition-colors ${!u.ativo ? 'opacity-50' : 'hover:bg-gray-50'}`}>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-bold text-green-800 flex-shrink-0">
-                        {u.nome.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {u.nome}
-                          {ehVoce && <span className="ml-2 text-xs text-gray-400">(você)</span>}
+                return (
+                  <tr key={u.id} className={`border-b border-white/5 last:border-0 transition-colors ${!u.ativo ? 'opacity-50' : 'hover:bg-white/[0.03]'}`}>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style={{ background: 'rgba(184,150,42,0.18)', color: '#d4af37' }}>
+                          {u.nome.charAt(0).toUpperCase()}
                         </div>
-                        <div className="text-xs text-gray-400">{u.email}</div>
+                        <div>
+                          <div className="text-sm font-medium text-foreground">
+                            {u.nome}
+                            {ehVoce && <span className="ml-2 text-xs text-muted-foreground">(você)</span>}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{u.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${perfil?.color}`}>
-                      {Icon && <Icon size={11} />}
-                      {perfil?.label}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-sm text-gray-600">
-                    {u.area ? areaLabels[u.area] || u.area : '—'}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-gray-600">{u.oab || '—'}</td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.ativo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                      {u.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-xs text-gray-400">
-                    {new Date(u.createdAt).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => abrirEditar(u)}
-                        className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded"
-                        title="Editar"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      {!ehVoce && (
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${perfil?.color}`}>
+                        {Icon && <Icon size={11} />}
+                        {perfil?.label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
+                      {u.area ? areaLabels[u.area] || u.area : '—'}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-muted-foreground hidden lg:table-cell">{u.oab || '—'}</td>
+                    <td className="px-5 py-3">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.ativo ? 'bg-emerald-400/15 text-emerald-400' : 'bg-white/8 text-muted-foreground'}`}>
+                        {u.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground hidden sm:table-cell">
+                      {new Date(u.createdAt).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => toggleAtivo(u)}
-                          className={`transition-colors p-1 rounded ${u.ativo ? 'text-gray-400 hover:text-red-600' : 'text-gray-400 hover:text-green-600'}`}
-                          title={u.ativo ? 'Desativar' : 'Reativar'}
+                          onClick={() => abrirEditar(u)}
+                          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                          title="Editar"
                         >
-                          {u.ativo ? <UserX size={14} /> : <UserCheck size={14} />}
+                          <Pencil size={14} />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                        {!ehVoce && (
+                          <button
+                            onClick={() => toggleAtivo(u)}
+                            className={`transition-colors p-1 rounded ${u.ativo ? 'text-muted-foreground hover:text-red-400' : 'text-muted-foreground hover:text-emerald-400'}`}
+                            title={u.ativo ? 'Desativar' : 'Reativar'}
+                          >
+                            {u.ativo ? <UserX size={14} /> : <UserCheck size={14} />}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
       {modalAberto && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className="w-full max-w-lg rounded-2xl border border-white/10" style={{ background: '#161616' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0" style={{ background: '#161616' }}>
+              <h2 className="text-base font-semibold text-foreground">
                 {editando ? 'Editar Usuário' : 'Novo Usuário'}
               </h2>
-              <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setModalAberto(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -323,7 +326,7 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
               </div>
 
               {erro && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">
+                <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3 mt-4">
                   {erro}
                 </div>
               )}
@@ -332,14 +335,15 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
                 <button
                   type="button"
                   onClick={() => setModalAberto(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-muted-foreground border border-white/10 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-black rounded-lg transition-all disabled:opacity-50 hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
                 >
                   {loading ? 'Salvando...' : editando ? 'Salvar' : 'Criar Usuário'}
                 </button>
