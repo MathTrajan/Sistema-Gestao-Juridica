@@ -106,7 +106,8 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
 
       {aberto && (
         <>
-          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain" style={{ background: 'rgba(0,0,0,0.55)' }}>
+          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.55)' }} />
+          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-start justify-center px-4 py-8">
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-2xl bg-white">
@@ -201,6 +202,7 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
                 </button>
               </div>
             </form>
+          </div>
           </div>
           </div>
           </div>

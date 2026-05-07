@@ -477,7 +477,8 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
       {/* Modal */}
       {modalAberto && (
         <>
-          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain" style={{ background: 'rgba(0,0,0,0.65)' }}>
+          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.65)' }} />
+          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
           <div className="flex min-h-full items-start justify-center px-4 py-8">
           <div className="relative rounded-2xl border border-white/10 w-full max-w-lg" style={{ background: 'var(--surface)', boxShadow: '0 25px 80px rgba(0,0,0,0.65)' }}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 rounded-t-2xl" style={{ background: 'var(--surface)' }}>
@@ -568,6 +569,7 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
                 </button>
               </div>
             </form>
+          </div>
           </div>
           </div>
           </div>
