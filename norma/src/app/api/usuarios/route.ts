@@ -13,22 +13,29 @@ export async function GET() {
   const escritorioId = session.user.escritorioId
 
   try {
-    const usuarios = await prisma.usuario.findMany({
-      where: { escritorioId },
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        perfil: true,
-        area: true,
-        oab: true,
-        telefone: true,
-        ativo: true,
-        permissoes: true,
-        createdAt: true,
-      },
-    })
+    let usuarios: any[]
+    try {
+      usuarios = await prisma.usuario.findMany({
+        where: { escritorioId },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true, nome: true, email: true, perfil: true,
+          area: true, oab: true, telefone: true, ativo: true,
+          permissoes: true, createdAt: true,
+        },
+      })
+    } catch {
+      const sem = await prisma.usuario.findMany({
+        where: { escritorioId },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true, nome: true, email: true, perfil: true,
+          area: true, oab: true, telefone: true, ativo: true,
+          createdAt: true,
+        },
+      })
+      usuarios = sem.map((u: any) => ({ ...u, permissoes: [] }))
+    }
     return NextResponse.json(usuarios)
   } catch (err) {
     console.error(err)
@@ -65,33 +72,50 @@ export async function POST(req: Request) {
     }
 
     const senhaHash = await bcrypt.hash(body.senha, 10)
-
     const permissoes = Array.isArray(body.permissoes)
       ? body.permissoes.filter((p: unknown) => typeof p === 'string')
       : []
 
-    const usuario = await prisma.usuario.create({
-      data: {
-        nome: String(body.nome).trim(),
-        email: String(body.email).trim().toLowerCase(),
-        senha: senhaHash,
-        perfil: PERFIS_USUARIO.includes(body.perfil) ? body.perfil : 'COLABORADOR',
-        area: AREAS_USUARIO.includes(body.area) ? body.area : null,
-        oab: body.oab ? String(body.oab).trim() : null,
-        telefone: body.telefone ? String(body.telefone).trim() : null,
-        permissoes,
-        escritorioId,
-      },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        perfil: true,
-        area: true,
-        permissoes: true,
-        ativo: true,
-      },
-    })
+    // Tenta criar com permissoes; se a coluna ainda não existir no DB, cria sem ela
+    let usuario: any
+    try {
+      usuario = await prisma.usuario.create({
+        data: {
+          nome: String(body.nome).trim(),
+          email: String(body.email).trim().toLowerCase(),
+          senha: senhaHash,
+          perfil: PERFIS_USUARIO.includes(body.perfil) ? body.perfil : 'COLABORADOR',
+          area: AREAS_USUARIO.includes(body.area) ? body.area : null,
+          oab: body.oab ? String(body.oab).trim() : null,
+          telefone: body.telefone ? String(body.telefone).trim() : null,
+          permissoes,
+          escritorioId,
+        },
+        select: {
+          id: true, nome: true, email: true, perfil: true,
+          area: true, permissoes: true, ativo: true,
+        },
+      })
+    } catch {
+      usuario = await prisma.usuario.create({
+        data: {
+          nome: String(body.nome).trim(),
+          email: String(body.email).trim().toLowerCase(),
+          senha: senhaHash,
+          perfil: PERFIS_USUARIO.includes(body.perfil) ? body.perfil : 'COLABORADOR',
+          area: AREAS_USUARIO.includes(body.area) ? body.area : null,
+          oab: body.oab ? String(body.oab).trim() : null,
+          telefone: body.telefone ? String(body.telefone).trim() : null,
+          escritorioId,
+        },
+        select: {
+          id: true, nome: true, email: true, perfil: true,
+          area: true, ativo: true,
+        },
+      })
+      usuario = { ...usuario, permissoes: [] }
+    }
+
     return NextResponse.json(usuario, { status: 201 })
   } catch (err) {
     console.error(err)

@@ -38,7 +38,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="relative flex min-h-screen" style={{ background: '#0D0D0D' }}>
+      <div className="relative flex min-h-screen" style={{ background: 'var(--bg)' }}>
 
         {/* Padrão de pontos sutil */}
         <div

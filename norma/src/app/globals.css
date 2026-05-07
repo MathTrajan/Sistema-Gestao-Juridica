@@ -358,13 +358,23 @@ select {
 }
 
 /* Previne browser autofill de sobrescrever fundo escuro nos inputs */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
+:root:not(.light) input:-webkit-autofill,
+:root:not(.light) input:-webkit-autofill:hover,
+:root:not(.light) input:-webkit-autofill:focus,
+:root:not(.light) input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 100px #141414 inset !important;
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:root.light input:-webkit-autofill,
+:root.light input:-webkit-autofill:hover,
+:root.light input:-webkit-autofill:focus,
+:root.light input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 100px #ffffff inset !important;
+  -webkit-text-fill-color: oklch(0.12 0 0) !important;
+  caret-color: oklch(0.12 0 0);
   transition: background-color 5000s ease-in-out 0s;
 }
 

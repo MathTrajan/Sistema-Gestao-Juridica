@@ -288,9 +288,11 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
 
       {/* Modal */}
       {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10" style={{ background: '#161616' }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0" style={{ background: '#161616' }}>
+        <>
+          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain" style={{ background: 'rgba(0,0,0,0.72)' }}>
+          <div className="flex min-h-full items-start justify-center px-4 py-8">
+          <div className="relative w-full max-w-lg rounded-2xl border border-white/10" style={{ background: 'var(--surface)' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 rounded-t-2xl" style={{ background: 'var(--surface)' }}>
               <h2 className="text-base font-semibold text-foreground">
                 {editando ? 'Editar Usuário' : 'Novo Usuário'}
               </h2>
@@ -449,7 +451,9 @@ export default function UsuariosClient({ usuarios: inicial, sessaoId, perfilLabe
               </div>
             </form>
           </div>
-        </div>
+          </div>
+          </div>
+        </>
       )}
     </>
   )

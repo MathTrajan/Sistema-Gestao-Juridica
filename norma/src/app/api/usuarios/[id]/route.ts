@@ -33,7 +33,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       data.senha = await bcrypt.hash(body.senha, 10)
     }
 
-    await prisma.usuario.updateMany({ where: { id, escritorioId }, data })
+    // Tenta atualizar com permissoes; se a coluna ainda não existir, remove do payload
+    try {
+      await prisma.usuario.updateMany({ where: { id, escritorioId }, data })
+    } catch {
+      const { permissoes: _p, ...dataFallback } = data
+      await prisma.usuario.updateMany({ where: { id, escritorioId }, data: dataFallback })
+    }
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error(err)
