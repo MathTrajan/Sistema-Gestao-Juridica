@@ -72,13 +72,6 @@ npm run build
 npm run start
 ```
 
-## Login Inicial Do Seed
-
-- E-mail: `admin@escritorio.com`
-- Senha: `123456`
-
-Troque essas credenciais ao usar o sistema fora de ambiente local.
-
 ## Estrutura
 
 ```text

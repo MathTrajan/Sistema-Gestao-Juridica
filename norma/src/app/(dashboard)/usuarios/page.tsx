@@ -13,7 +13,7 @@ const perfilLabels: Record<string, string> = {
 const areaLabels: Record<string, string> = {
   COMERCIAL: 'Comercial',
   CONTROLADORIA: 'Controladoria',
-  JURIDICO: 'JurÃ­dico',
+  JURIDICO: 'Jurídico',
   FINANCEIRO: 'Financeiro',
   MARKETING: 'Marketing',
 }
@@ -23,28 +23,48 @@ export default async function UsuariosPage() {
   const escritorioId = (session?.user as any)?.escritorioId
   const sessaoId = (session?.user as any)?.id
 
-  const usuarios = await prisma.usuario.findMany({
-    where: { escritorioId },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      id: true,
-      nome: true,
-      email: true,
-      perfil: true,
-      area: true,
-      oab: true,
-      telefone: true,
-      ativo: true,
-      permissoes: true,
-      createdAt: true,
-    },
-  })
+  let rawUsuarios: any[] = []
+  try {
+    rawUsuarios = await prisma.usuario.findMany({
+      where: { escritorioId },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        perfil: true,
+        area: true,
+        oab: true,
+        telefone: true,
+        ativo: true,
+        permissoes: true,
+        createdAt: true,
+      },
+    })
+  } catch {
+    const sem = await prisma.usuario.findMany({
+      where: { escritorioId },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        perfil: true,
+        area: true,
+        oab: true,
+        telefone: true,
+        ativo: true,
+        createdAt: true,
+      },
+    })
+    rawUsuarios = sem.map(u => ({ ...u, permissoes: [] as string[] }))
+  }
 
-  const usuariosMapeados = usuarios.map(u => ({
+  const usuariosMapeados = rawUsuarios.map((u: any) => ({
     ...u,
     perfil: u.perfil as string,
     area: u.area as string | null,
-    permissoes: u.permissoes as string[],
+    permissoes: (u.permissoes ?? []) as string[],
     createdAt: u.createdAt.toISOString(),
   }))
 

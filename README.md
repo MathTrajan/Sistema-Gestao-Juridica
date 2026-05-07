@@ -75,11 +75,6 @@ Aplicação local:
 
 - `http://localhost:3001`
 
-Login inicial do seed:
-
-- E-mail: `admin@escritorio.com`
-- Senha: `123456`
-
 ## Scripts
 
 ```bash

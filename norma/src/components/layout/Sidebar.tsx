@@ -102,13 +102,14 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 
 // ─── Nav link ─────────────────────────────────────────────────────────────────
 function NavLink({
-  href, label, Icon, badge, badgeRed, collapsed,
+  href, label, Icon, badge, badgeRed, collapsed, isDark,
 }: {
   href: string; label: string; Icon: React.ElementType
-  badge?: number; badgeRed?: boolean; collapsed: boolean
+  badge?: number; badgeRed?: boolean; collapsed: boolean; isDark: boolean
 }) {
   const pathname = usePathname()
   const active = pathname === href || pathname.startsWith(`${href}/`)
+  const inactiveColor = isDark ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.58)'
 
   const inner = (
     <Link
@@ -123,7 +124,7 @@ function NavLink({
       style={
         active
           ? { color: '#C89B3C', background: 'rgba(200,155,60,0.09)', border: '1px solid rgba(200,155,60,0.15)' }
-          : { color: 'rgba(255,255,255,0.62)', border: '1px solid transparent' }
+          : { color: inactiveColor, border: '1px solid transparent' }
       }
     >
       {/* Left indicator bar */}
@@ -182,11 +183,11 @@ function NavLink({
 }
 
 // ─── Section title ─────────────────────────────────────────────────────────────
-function SectionLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
-  if (collapsed) return <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 12px' }} />
+function SectionLabel({ children, collapsed, isDark }: { children: React.ReactNode; collapsed: boolean; isDark: boolean }) {
+  if (collapsed) return <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)', margin: '8px 12px' }} />
   return (
     <p className="px-3.5 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-[1.2px]"
-      style={{ color: 'rgba(255,255,255,0.3)' }}>
+      style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.36)' }}>
       {children}
     </p>
   )
@@ -194,9 +195,9 @@ function SectionLabel({ children, collapsed }: { children: React.ReactNode; coll
 
 // ─── Control button ────────────────────────────────────────────────────────────
 function CtrlBtn({
-  onClick, title, children, active = false,
+  onClick, title, children, active = false, isDark,
 }: {
-  onClick: () => void; title: string; children: React.ReactNode; active?: boolean
+  onClick: () => void; title: string; children: React.ReactNode; active?: boolean; isDark: boolean
 }) {
   return (
     <Tooltip label={title}>
@@ -206,7 +207,11 @@ function CtrlBtn({
         className="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150"
         style={active
           ? { color: '#C89B3C', background: 'rgba(200,155,60,0.12)', border: '1px solid rgba(200,155,60,0.25)' }
-          : { color: 'rgba(255,255,255,0.4)', background: 'transparent', border: '1px solid rgba(255,255,255,0.07)' }
+          : {
+              color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+              background: 'transparent',
+              border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.1)',
+            }
         }
       >
         {children}
@@ -345,7 +350,7 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
         {/* ── Nav ──────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto" style={{ padding: collapsed ? '12px 0' : '12px' }}>
 
-          <SectionLabel collapsed={collapsed}>Principal</SectionLabel>
+          <SectionLabel collapsed={collapsed} isDark={isDark}>Principal</SectionLabel>
           <div className={cn('flex flex-col', collapsed ? 'gap-1 items-center' : 'gap-0.5')}>
             {navVisible.map(item => (
               <NavLink
@@ -356,16 +361,17 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
                 badge={item.href === '/tarefas' ? badgeTarefas || undefined : item.href === '/prazos' ? badgePrazos || undefined : undefined}
                 badgeRed={item.href === '/prazos'}
                 collapsed={collapsed}
+                isDark={isDark}
               />
             ))}
           </div>
 
           {deptVisible.length > 0 && (
             <>
-              <SectionLabel collapsed={collapsed}>Departamentos</SectionLabel>
+              <SectionLabel collapsed={collapsed} isDark={isDark}>Departamentos</SectionLabel>
               <div className={cn('flex flex-col', collapsed ? 'gap-1 items-center' : 'gap-0.5')}>
                 {deptVisible.map(item => (
-                  <NavLink key={item.href} href={item.href} label={item.label} Icon={item.icon} collapsed={collapsed} />
+                  <NavLink key={item.href} href={item.href} label={item.label} Icon={item.icon} collapsed={collapsed} isDark={isDark} />
                 ))}
               </div>
             </>
@@ -373,10 +379,10 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
 
           {systemVisible.length > 0 && (
             <>
-              <SectionLabel collapsed={collapsed}>Sistema</SectionLabel>
+              <SectionLabel collapsed={collapsed} isDark={isDark}>Sistema</SectionLabel>
               <div className={cn('flex flex-col', collapsed ? 'gap-1 items-center' : 'gap-0.5')}>
                 {systemVisible.map(item => (
-                  <NavLink key={item.href} href={item.href} label={item.label} Icon={item.icon} collapsed={collapsed} />
+                  <NavLink key={item.href} href={item.href} label={item.label} Icon={item.icon} collapsed={collapsed} isDark={isDark} />
                 ))}
               </div>
             </>
@@ -435,7 +441,10 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
               <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className="flex h-10 w-10 mx-auto items-center justify-center rounded-lg transition-all duration-150"
-                style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}
+                style={{
+                  color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                  border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
+                }}
               >
                 <LogOut size={15} />
               </button>
@@ -470,18 +479,19 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
           }}
         >
           {collapsed ? (
-            <CtrlBtn onClick={toggleCollapse} title="Expandir sidebar">
+            <CtrlBtn onClick={toggleCollapse} title="Expandir sidebar" isDark={isDark}>
               <ChevronRight size={14} />
             </CtrlBtn>
           ) : (
             <>
-              <CtrlBtn onClick={toggleCollapse} title="Recolher sidebar">
+              <CtrlBtn onClick={toggleCollapse} title="Recolher sidebar" isDark={isDark}>
                 <ChevronLeft size={14} />
               </CtrlBtn>
               <CtrlBtn
                 onClick={() => setMode(mode === 'hover' ? 'expanded' : 'hover')}
                 title={mode === 'hover' ? 'Desativar modo hover' : 'Modo hover (aparece ao passar o mouse)'}
                 active={mode === 'hover'}
+                isDark={isDark}
               >
                 <MousePointer2 size={13} />
               </CtrlBtn>
@@ -489,6 +499,7 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
                 onClick={() => setMode(mode === 'pinned' ? 'expanded' : 'pinned')}
                 title={mode === 'pinned' ? 'Desafixar sidebar' : 'Fixar sidebar (sempre visível)'}
                 active={mode === 'pinned'}
+                isDark={isDark}
               >
                 {mode === 'pinned' ? <PinOff size={13} /> : <Pin size={13} />}
               </CtrlBtn>

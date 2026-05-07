@@ -105,9 +105,11 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
       </button>
 
       {aberto && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+        <>
+          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain" style={{ background: 'rgba(0,0,0,0.55)' }}>
+          <div className="flex min-h-full items-start justify-center px-4 py-8">
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-2xl bg-white">
               <h2 className="text-base font-semibold text-gray-900">Editar Processo</h2>
               <button onClick={() => setAberto(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
@@ -200,7 +202,9 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
               </div>
             </form>
           </div>
-        </div>
+          </div>
+          </div>
+        </>
       )}
     </>
   )
