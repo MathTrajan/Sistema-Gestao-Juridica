@@ -33,7 +33,7 @@ export default async function ClientesPage({
 }) {
   const { search } = await searchParams
   const session = await auth()
-  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const userData = session?.user as { escritorioId?: string } | undefined
   const escritorioId = userData?.escritorioId
 
   const clientes = await prisma.cliente

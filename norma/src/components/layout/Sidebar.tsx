@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Cinzel, Inter } from 'next/font/google'
 import { cn } from '@/lib/utils'
+import lightThemeLogo from '@/app/icon dark.png'
 import { useSidebar } from './SidebarContext'
 import {
   LayoutDashboard, Users, FileText, CheckSquare, Clock,
@@ -246,6 +247,8 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
     ? { background: 'linear-gradient(180deg, #141416 0%, #0D0D10 100%)' }
     : { background: '#ffffff' }
 
+  const logoSrc = isDark ? '/icon.png' : lightThemeLogo
+
   const borderStyle = isDark
     ? '1px solid rgba(255,255,255,0.07)'
     : '1px solid rgba(0,0,0,0.09)'
@@ -292,7 +295,7 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
         >
           <div style={{ flexShrink: 0, width: 56, height: 56, position: 'relative' }}>
             <Image
-              src="/logo-norma-icon.png"
+              src={logoSrc}
               alt="Norma Logo"
               width={56}
               height={56}
@@ -488,8 +491,8 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
                 <ChevronLeft size={14} />
               </CtrlBtn>
               <CtrlBtn
-                onClick={() => setMode(mode === 'hover' ? 'expanded' : 'hover')}
-                title={mode === 'hover' ? 'Desativar modo hover' : 'Modo hover (aparece ao passar o mouse)'}
+                onClick={() => setMode(mode === 'hover' ? 'collapsed' : 'hover')}
+                title="Menu sempre visível"
                 active={mode === 'hover'}
                 isDark={isDark}
               >

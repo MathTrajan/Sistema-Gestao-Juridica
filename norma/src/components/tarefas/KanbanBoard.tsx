@@ -502,16 +502,16 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
       )}
 
       {editando ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 shadow-2xl" style={{ background: 'rgba(18,18,18,0.97)' }}>
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '28rem' }}>
+            <div className="modal-header">
               <h2 className="text-base font-semibold text-white">Editar tarefa</h2>
               <button onClick={() => setEditando(null)} className="text-muted-foreground hover:text-white">
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleEditSalvar} className="p-6">
+            <form onSubmit={handleEditSalvar} className="modal-body">
               <div className="flex flex-col gap-4">
                 <div>
                   <label className={labelClass}>Titulo *</label>
@@ -565,9 +565,9 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                 ) : null}
               </div>
 
-              {editErro ? <div className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{editErro}</div> : null}
+              {editErro ? <div className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger mb-4">{editErro}</div> : null}
 
-              <div className="mt-6 flex gap-3">
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setEditando(null)}

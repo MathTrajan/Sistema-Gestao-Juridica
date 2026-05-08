@@ -330,33 +330,26 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
 
       {editando ? (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}
+          className="modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="w-full max-w-lg rounded-[2rem] shadow-2xl"
-            style={{
-              background: 'rgba(18,18,18,0.97)',
-              backdropFilter: 'blur(28px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
-            }}
+            className="modal-content lg"
             initial={{ scale: 0.94, y: 16, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.94, y: 16, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 28 }}
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div className="modal-header">
               <h2 className="text-base font-semibold text-white">Editar prazo</h2>
               <button onClick={() => setEditando(null)} className="text-muted-foreground hover:text-white">
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSalvar} className="p-6">
+            <form onSubmit={handleSalvar} className="modal-body">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className={labelClass}>Titulo *</label>
@@ -398,9 +391,9 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
                 </div>
               </div>
 
-              {erro ? <div className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">{erro}</div> : null}
+              {erro ? <div className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger mb-4">{erro}</div> : null}
 
-              <div className="mt-6 flex gap-3">
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setEditando(null)}

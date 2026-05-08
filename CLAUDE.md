@@ -2,6 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Contexto do Projeto
+
+> Gerado por /mapa em 2026-05-08. Grafo completo: `G:\Meu Drive\Obsidian Vault\Graphify\Sistema-Gestao-Jurídico\graphify-out\GRAPH_REPORT.md`
+
+### Núcleo do sistema (god nodes)
+- `norma/CLAUDE.md` — 16 conexões — hub de toda a arquitetura da app
+- `Framer Motion` — 12 conexões — ponte entre Design System, Layout, Dashboard e Kanban
+- `Root CLAUDE.md` — 11 conexões — ancora design system + padrões frontend
+- `Encoding Modal Fix Guide` — 10 conexões — documenta a correção UTF-8 e refactor de modais
+- `PUT()` / `guardArea()` — 9 conexões cada — núcleo das rotas de escrita e controle de acesso
+
+### Comunidades
+| ID | Nome |
+|---|---|
+| C1 | Encoding Fix & Client Components |
+| C2 | API Route Handlers |
+| C3 | Design System & Docs |
+| C4 | Layout & Sidebar Navigation |
+| C5 | UTF-8 Encoding Repair |
+| C6 | Dashboard Data & Analytics |
+| C8 | API Response Helpers |
+| C10 | Brazilian Document Formatters |
+| C11 | Middleware & Rate Limiting |
+| C12–C23 | Formulários por módulo (um cluster por form) |
+| C57–C76 | Config, auth, schemas, rotas isoladas |
+
+### Conexões não óbvias
+- Os ícones da marca (`icon.png`, `icon dark.png`, `logo-norma-icon.png`) conectam-se ao Gold Color Palette — identidade visual é estruturalmente atada ao design system, não apenas documentação
+- `fixClientesEncoding()` → `sanitizeUTF8()` — o script de seed repair usa a mesma função utilitária que os helpers de API em runtime; corrigir um afeta o outro
+- `Prisma Seed Fix Encoding` → `Prisma ORM (Neon)` — o script de reparo de encoding é uma operação direta no banco, não uma rota — requer `DIRECT_URL`, não `DATABASE_URL`
+
 ## Repository layout
 
 ```

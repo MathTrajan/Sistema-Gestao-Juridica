@@ -155,7 +155,7 @@ export default function LoginPage() {
                 />
 
                 <Image
-                  src="/logo-norma-icon.png"
+                  src="/icon.png"
                   alt="Norma"
                   width={96}
                   height={96}

@@ -26,6 +26,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${jetbrains.variable} ${playfair.variable} h-full`}>
       <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         {/* Anti-flash: aplica tema antes da hidratação */}
         <script
           dangerouslySetInnerHTML={{
