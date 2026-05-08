@@ -130,9 +130,9 @@
   --surface2: #F5F6F9;
   --border: rgba(0, 0, 0, 0.08);
   --border2: rgba(0, 0, 0, 0.05);
-  --text: oklch(0.12 0 0);
-  --text2: oklch(0.30 0 0);
-  --text3: oklch(0.50 0 0);
+  --text: #101114;
+  --text2: rgba(16, 17, 20, 0.82);
+  --text3: rgba(16, 17, 20, 0.62);
   --background: var(--bg);
   --card: #FFFFFF;
   --card-foreground: oklch(0.12 0 0);
@@ -318,6 +318,9 @@
     font-size: 14px;
     min-height: 100vh;
     background: var(--bg);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -351,10 +354,51 @@ select {
   color-scheme: dark;
 }
 
+select option,
+select optgroup {
+  background: #161616;
+  color: #ffffff;
+}
+
+select option:checked,
+select option:hover {
+  background: rgba(184, 150, 42, 0.2);
+  color: #ffffff;
+}
+
 :root.light input,
 :root.light textarea,
 :root.light select {
   color-scheme: light;
+}
+
+:root.light body,
+:root.light input,
+:root.light textarea,
+:root.light select,
+:root.light button,
+:root.light p,
+:root.light span,
+:root.light label,
+:root.light th,
+:root.light td,
+:root.light h1,
+:root.light h2,
+:root.light h3,
+:root.light h4 {
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+:root.light select option,
+:root.light select optgroup {
+  background: #ffffff;
+  color: oklch(0.12 0 0);
+}
+
+:root.light select option:checked,
+:root.light select option:hover {
+  background: rgba(184, 150, 42, 0.14);
+  color: oklch(0.12 0 0);
 }
 
 /* Previne browser autofill de sobrescrever fundo escuro nos inputs */
@@ -564,10 +608,11 @@ select {
 .animate-slide-in-down  { animation: slideInDown  0.55s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-slide-in-up    { animation: slideInUp    0.55s cubic-bezier(0.22,1,0.36,1) both; }
 
-/* Page fade */
+/* Page fade — NÃO usar transform no estado final para evitar stacking context
+   que clipa position:fixed (modais) dentro do .page-enter */
 @keyframes pageFadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 .page-enter {
   animation: pageFadeIn 0.45s ease-out forwards;
@@ -906,4 +951,124 @@ select {
 /* Força fundo escuro nos widgets */
 :root:not(.light) div[class*="bg-white"] {
   background-color: var(--surface) !important;
+}
+
+/* ========================================================================
+   MODAL OVERLAY CORRETO (Fix para problema de corte de tela)
+   ======================================================================== */
+
+/* Container overlay - position fixa, cobre tudo, sem overflow */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  
+  /* Importante: não fazer overflow - deixar scrollbar do body */
+  overflow: hidden;
+  
+  /* Backdrop desfocado */
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Modal content - containerizado com scroll interno se necessário */
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 32rem; /* max-w-2xl = 640px para formulários maiores */
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Estilo vidro */
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  
+  /* Animação entrada */
+  animation: modalEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Tamanho grande para formulários */
+.modal-content.lg {
+  max-width: 42rem; /* max-w-2xl */
+}
+
+/* Header sticky - fica no topo mesmo ao fazer scroll */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border-radius: 1rem 1rem 0 0;
+}
+
+/* Body com padding */
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Footer com botões */
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  justify-content: flex-end;
+}
+
+/* Animações */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+/* Scroll suave no conteúdo modal */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.4);
 }

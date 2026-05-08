@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { FileText, Users, CheckSquare, DollarSign, TrendingUp, Clock } from 'lucide-react'
 
@@ -60,22 +60,22 @@ export default async function RelatoriosPage() {
         { label: 'Total de processos', valor: totalProcessos },
         { label: 'Em andamento', valor: totalProcessos - processosEncerrados },
         { label: 'Encerrados', valor: processosEncerrados },
-        { label: 'Novos este mÃªs', valor: processosNovos },
+        { label: 'Novos este mês', valor: processosNovos },
       ],
     },
     {
       titulo: 'Clientes', icon: Users, color: 'bg-green-50 text-green-700',
       items: [
         { label: 'Total de clientes', valor: totalClientes },
-        { label: 'Novos este mÃªs', valor: clientesNovos },
+        { label: 'Novos este mês', valor: clientesNovos },
         { label: 'Leads totais', valor: leads },
-        { label: 'Taxa de conversÃ£o', valor: `${taxaConversao}%` },
+        { label: 'Taxa de conversão', valor: `${taxaConversao}%` },
       ],
     },
     {
       titulo: 'Tarefas', icon: CheckSquare, color: 'bg-amber-50 text-amber-700',
       items: [
-        { label: 'ConcluÃ­das', valor: tarefasConcluidas },
+        { label: 'Concluídas', valor: tarefasConcluidas },
         { label: 'Pendentes', valor: tarefasPendentes },
         { label: 'Total de prazos', valor: prazosTotal },
         { label: 'Taxa cumprimento', valor: `${taxaPrazos}%` },
@@ -95,8 +95,8 @@ export default async function RelatoriosPage() {
       items: [
         { label: 'Receita total', valor: fmt(receita) },
         { label: 'Despesas total', valor: fmt(despesa) },
-        { label: 'Resultado lÃ­quido', valor: fmt(receita - despesa) },
-        { label: 'Receita este mÃªs', valor: fmt(receitaMesNum) },
+        { label: 'Resultado líquido', valor: fmt(receita - despesa) },
+        { label: 'Receita este mês', valor: fmt(receitaMesNum) },
       ],
     },
     {
@@ -104,7 +104,7 @@ export default async function RelatoriosPage() {
       items: [
         { label: 'Leads captados', valor: leads },
         { label: 'Convertidos', valor: leadsConvertidos },
-        { label: 'Taxa de conversÃ£o', valor: `${taxaConversao}%` },
+        { label: 'Taxa de conversão', valor: `${taxaConversao}%` },
         { label: 'Perdidos', valor: leads - leadsConvertidos },
       ],
     },
@@ -118,12 +118,12 @@ export default async function RelatoriosPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="text-2xl font-bold text-gray-900">{totalProcessos}</div>
           <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Processos totais</div>
-          <div className="text-xs text-green-600 mt-1">+{processosNovos} este mÃªs</div>
+          <div className="text-xs text-green-600 mt-1">+{processosNovos} este mês</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="text-2xl font-bold text-green-700">{fmt(receita)}</div>
           <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Receita total</div>
-          <div className="text-xs text-green-600 mt-1">{fmt(receitaMesNum)} este mÃªs</div>
+          <div className="text-xs text-green-600 mt-1">{fmt(receitaMesNum)} este mês</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="text-2xl font-bold text-gray-900">{taxaPrazos}%</div>
@@ -132,7 +132,7 @@ export default async function RelatoriosPage() {
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="text-2xl font-bold text-gray-900">{taxaConversao}%</div>
-          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">ConversÃ£o de leads</div>
+          <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-medium">Conversão de leads</div>
           <div className="text-xs text-gray-400 mt-1">{leadsConvertidos} de {leads}</div>
         </div>
       </div>

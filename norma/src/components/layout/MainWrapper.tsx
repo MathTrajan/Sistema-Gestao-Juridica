@@ -3,12 +3,12 @@
 import { useSidebar } from './SidebarContext'
 
 export function MainWrapper({ children }: { children: React.ReactNode }) {
-  const { mode } = useSidebar()
-  const ml = mode === 'collapsed' || mode === 'hover' ? 72 : 256
+  const { isExpanded } = useSidebar()
+  const ml = isExpanded ? 256 : 72
 
   return (
     <main
-      className="main-content relative z-10 flex min-w-0 flex-1 flex-col overflow-x-hidden"
+      className="main-content relative z-10 flex min-w-0 flex-1 flex-col"
       style={{ ['--sidebar-w' as string]: `${ml}px` }}
     >
       {children}

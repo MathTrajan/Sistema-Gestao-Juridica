@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, TrendingUp, TrendingDown, DollarSign, AlertCircle, Pencil, Trash2 } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, DollarSign, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 
 interface Lancamento {
   id: string
@@ -32,9 +32,6 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   CANCELADO: { label: 'Cancelado', color: 'bg-white/8 text-muted-foreground' },
 }
 
-const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/8"
-const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
-
 function mesAnoLabel(isoDate: string): string {
   const d = new Date(isoDate)
   return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -55,28 +52,12 @@ function addOneMonth(isoDate: string): string {
 }
 
 export default function FinanceiroClient({ lancamentos: inicial, clientes }: Props) {
+  void clientes
   const router = useRouter()
   const [lancamentos, setLancamentos] = useState(inicial)
-  const [modalAberto, setModalAberto] = useState(false)
-  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [filtro, setFiltro] = useState<'TODOS' | 'ENTRADA' | 'SAIDA'>('TODOS')
-  const [loading, setLoading] = useState(false)
-  const [erro, setErro] = useState('')
-  // Maps id -> 'confirming' | undefined for inline delete confirmation
+  // Maps id -> confirming for inline delete confirmation
   const [confirmandoDeletar, setConfirmandoDeletar] = useState<Record<string, boolean>>({})
-
-  const [form, setForm] = useState({
-    descricao: '',
-    tipo: 'ENTRADA',
-    categoria: '',
-    valor: '',
-    dataVencimento: '',
-    dataPagamento: '',
-    status: 'PENDENTE',
-    observacoes: '',
-    clienteId: '',
-    recorrente: false,
-  })
 
   const filtrados = useMemo(() => (
     lancamentos
@@ -113,108 +94,6 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
       .filter((l) => l.tipo === 'ENTRADA' && l.status === 'ATRASADO')
       .reduce((acc, l) => acc + l.valor, 0),
   }), [lancamentos])
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    const { name, value, type } = e.target
-    if (type === 'checkbox') {
-      setForm(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }))
-    }
-  }
-
-  function abrirModalNovo() {
-    setForm({
-      descricao: '', tipo: 'ENTRADA', categoria: '', valor: '',
-      dataVencimento: '', dataPagamento: '', status: 'PENDENTE',
-      observacoes: '', clienteId: '', recorrente: false,
-    })
-    setEditandoId(null)
-    setErro('')
-    setModalAberto(true)
-  }
-
-  function abrirModalEditar(l: Lancamento) {
-    setForm({
-      descricao: l.descricao,
-      tipo: l.tipo,
-      categoria: l.categoria ?? '',
-      valor: String(l.valor),
-      dataVencimento: l.dataVencimento.slice(0, 10),
-      dataPagamento: l.dataPagamento ? l.dataPagamento.slice(0, 10) : '',
-      status: l.status,
-      observacoes: l.observacoes ?? '',
-      clienteId: l.clienteId ?? '',
-      recorrente: l.recorrente,
-    })
-    setEditandoId(l.id)
-    setErro('')
-    setModalAberto(true)
-  }
-
-  function fecharModal() {
-    setModalAberto(false)
-    setEditandoId(null)
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setErro('')
-    setLoading(true)
-
-    try {
-      const payload = {
-        ...form,
-        valor: parseFloat(form.valor),
-        clienteId: form.clienteId || null,
-        dataPagamento: form.dataPagamento || null,
-        recorrente: form.recorrente,
-      }
-
-      if (editandoId) {
-        // PUT
-        const res = await fetch(`/api/financeiro/${editandoId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) throw new Error()
-
-        const cliente = clientes.find(c => c.id === form.clienteId) ?? null
-        setLancamentos(prev => prev.map(l =>
-          l.id === editandoId
-            ? {
-                ...l,
-                ...payload,
-                valor: Number(payload.valor),
-                dataVencimento: new Date(form.dataVencimento).toISOString(),
-                dataPagamento: form.dataPagamento ? new Date(form.dataPagamento).toISOString() : null,
-                cliente,
-              }
-            : l
-        ))
-      } else {
-        // POST
-        const res = await fetch('/api/financeiro', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) throw new Error()
-
-        const novo = await res.json()
-        const cliente = clientes.find(c => c.id === form.clienteId) ?? null
-        setLancamentos(prev => [{ ...novo, valor: Number(novo.valor), recorrente: form.recorrente, cliente }, ...prev])
-      }
-
-      fecharModal()
-      router.refresh()
-    } catch {
-      setErro('Erro ao salvar. Verifique os dados.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function marcarPago(id: string) {
     const l = lancamentos.find(x => x.id === id)
@@ -352,7 +231,7 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
             ))}
           </div>
           <button
-            onClick={abrirModalNovo}
+            onClick={() => router.push('/financeiro/novo')}
             className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-90 text-black"
             style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}
           >
@@ -444,7 +323,7 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
                                 </button>
                               )}
                               <button
-                                onClick={() => abrirModalEditar(l)}
+                                onClick={() => router.push(`/financeiro/${l.id}/editar`)}
                                 title="Editar"
                                 className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/8 transition-colors"
                               >
@@ -474,108 +353,6 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
         )}
       </div>
 
-      {/* Modal */}
-      {modalAberto && (
-        <>
-          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.65)' }} />
-          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
-          <div className="flex min-h-full items-start justify-center px-4 py-8">
-          <div className="relative rounded-2xl border border-white/10 w-full max-w-lg" style={{ background: 'var(--surface)', boxShadow: '0 25px 80px rgba(0,0,0,0.65)' }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 rounded-t-2xl" style={{ background: 'var(--surface)' }}>
-              <h2 className="text-base font-semibold text-foreground">
-                {editandoId ? 'Editar Lançamento' : 'Novo Lançamento'}
-              </h2>
-              <button onClick={fecharModal} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className={labelClass}>Descrição *</label>
-                  <input name="descricao" value={form.descricao} onChange={handleChange} className={inputClass} required placeholder="Ex: Honorários João Silva" />
-                </div>
-                <div>
-                  <label className={labelClass}>Tipo *</label>
-                  <select name="tipo" value={form.tipo} onChange={handleChange} className={inputClass}>
-                    <option value="ENTRADA">Receita (Entrada)</option>
-                    <option value="SAIDA">Despesa (Saída)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Categoria</label>
-                  <input name="categoria" value={form.categoria} onChange={handleChange} className={inputClass} placeholder="Ex: Honorários" />
-                </div>
-                <div>
-                  <label className={labelClass}>Valor (R$) *</label>
-                  <input type="number" name="valor" value={form.valor} onChange={handleChange} className={inputClass} required step="0.01" min="0" placeholder="0,00" />
-                </div>
-                <div>
-                  <label className={labelClass}>Status</label>
-                  <select name="status" value={form.status} onChange={handleChange} className={inputClass}>
-                    <option value="PENDENTE">Pendente</option>
-                    <option value="PAGO">Pago</option>
-                    <option value="ATRASADO">Atrasado</option>
-                    <option value="CANCELADO">Cancelado</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Data de Vencimento *</label>
-                  <input type="date" name="dataVencimento" value={form.dataVencimento} onChange={handleChange} className={inputClass} required />
-                </div>
-                <div>
-                  <label className={labelClass}>Data de Pagamento</label>
-                  <input type="date" name="dataPagamento" value={form.dataPagamento} onChange={handleChange} className={inputClass} />
-                </div>
-                <div className="col-span-2">
-                  <label className={labelClass}>Cliente (opcional)</label>
-                  <select name="clienteId" value={form.clienteId} onChange={handleChange} className={inputClass}>
-                    <option value="">Nenhum</option>
-                    {clientes.map(c => (
-                      <option key={c.id} value={c.id}>{c.nomeCompleto}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className={labelClass}>Observações</label>
-                  <textarea name="observacoes" value={form.observacoes} onChange={handleChange} className={inputClass} rows={2} />
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      name="recorrente"
-                      checked={form.recorrente}
-                      onChange={handleChange}
-                      className="w-4 h-4 rounded cursor-pointer accent-[#B8962A]"
-                    />
-                    <span className="text-sm text-foreground font-medium">Lançamento recorrente</span>
-                    <span className="text-xs text-muted-foreground">(cria próximo mês automaticamente ao marcar como pago)</span>
-                  </label>
-                </div>
-              </div>
-
-              {erro && (
-                <div className="rounded-lg border border-danger/20 bg-danger-bg text-danger text-sm px-4 py-3 mt-4">{erro}</div>
-              )}
-
-              <div className="flex gap-3 mt-6">
-                <button type="button" onClick={fecharModal} className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-white/10 text-foreground hover:bg-white/8 transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 text-black"
-                  style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}>
-                  {loading ? 'Salvando...' : editandoId ? 'Salvar Alterações' : 'Salvar'}
-                </button>
-              </div>
-            </form>
-          </div>
-          </div>
-          </div>
-          </div>
-        </>
-      )}
     </>
   )
 }
-
