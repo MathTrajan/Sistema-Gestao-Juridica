@@ -24,8 +24,8 @@ interface ProcessoEditModalProps {
   usuarios: { id: string; nome: string }[]
 }
 
-const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-const labelClass = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-gold/35 focus:bg-white/8"
+const labelClass = "block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
 
 const areaOptions = [
   { value: '', label: 'Selecione' },
@@ -98,25 +98,22 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
     <>
       <button
         onClick={() => setAberto(true)}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/10"
       >
         <Pencil size={14} />
         Editar
       </button>
 
       {aberto && (
-        <>
-          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.55)' }} />
-          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
-          <div className="flex min-h-full items-start justify-center px-4 py-8">
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-2xl bg-white">
-              <h2 className="text-base font-semibold text-gray-900">Editar Processo</h2>
-              <button onClick={() => setAberto(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="modal-overlay">
+          <div className="modal-content lg">
+            <div className="modal-header">
+              <h2 className="text-base font-semibold text-foreground">Editar Processo</h2>
+              <button onClick={() => setAberto(false)} className="text-muted-foreground hover:text-foreground">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className="modal-body">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Número do Processo</label>
@@ -192,21 +189,18 @@ export default function ProcessoEditModal({ processoId, initial, usuarios }: Pro
                   <textarea name="observacoes" value={form.observacoes} onChange={handleChange} className={inputClass} rows={3} />
                 </div>
               </div>
-              {erro && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mt-4">{erro}</div>}
-              <div className="flex gap-3 mt-6">
-                <button type="button" onClick={() => setAberto(false)} className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              {erro && <div className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-400 mb-4">{erro}</div>}
+              <div className="modal-footer">
+                <button type="button" onClick={() => setAberto(false)} className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/10">
                   Cancelar
                 </button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-800 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                <button type="submit" disabled={loading} className="flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-black transition-all hover:opacity-90 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}>
                   {loading ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
               </div>
             </form>
           </div>
-          </div>
-          </div>
-          </div>
-        </>
+        </div>
       )}
     </>
   )
