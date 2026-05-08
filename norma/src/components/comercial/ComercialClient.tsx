@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { type ElementType, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Flame, Minus, Snowflake } from 'lucide-react'
+import { Plus, Flame, Minus, Snowflake } from 'lucide-react'
 
 interface Lead {
   id: string
@@ -30,7 +30,7 @@ const etapas = [
   { id: 'PERDIDO', label: 'Perdido' },
 ]
 
-const temperaturaConfig: Record<string, { label: string; color: string; icon: any }> = {
+const temperaturaConfig: Record<string, { label: string; color: string; icon: ElementType }> = {
   QUENTE: { label: 'Quente', color: 'bg-red-400/15 text-red-400', icon: Flame },
   MORNO: { label: 'Morno', color: 'bg-amber-400/15 text-amber-400', icon: Minus },
   FRIO: { label: 'Frio', color: 'bg-blue-400/15 text-blue-400', icon: Snowflake },
@@ -45,72 +45,11 @@ const etapaColors: Record<string, string> = {
   PERDIDO: 'bg-red-400/15 text-red-400',
 }
 
-const areaOptions = [
-  { value: 'TRABALHISTA', label: 'Trabalhista' },
-  { value: 'CIVIL', label: 'Cível' },
-  { value: 'TRIBUTARIO', label: 'Tributário' },
-  { value: 'PREVIDENCIARIO', label: 'Previdenciário' },
-  { value: 'CRIMINAL', label: 'Criminal' },
-  { value: 'FAMILIA', label: 'Família' },
-  { value: 'EMPRESARIAL', label: 'Empresarial' },
-  { value: 'OUTRO', label: 'Outro' },
-]
-
-const origemOptions = [
-  { value: 'INDICACAO', label: 'Indicação' },
-  { value: 'SITE', label: 'Site' },
-  { value: 'INSTAGRAM', label: 'Instagram' },
-  { value: 'GOOGLE', label: 'Google' },
-  { value: 'WHATSAPP', label: 'WhatsApp' },
-  { value: 'OUTRO', label: 'Outro' },
-]
-
-const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
-const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
 
 export default function ComercialClient({ leads: inicial }: { leads: Lead[] }) {
   const router = useRouter()
   const [leads, setLeads] = useState(inicial)
-  const [modalAberto, setModalAberto] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [erro, setErro] = useState('')
   const [abaAtiva, setAbaAtiva] = useState<'funil' | 'lista'>('funil')
-
-  const [form, setForm] = useState({
-    nome: '', email: '', telefone: '',
-    areaInteresse: '', origem: '', etapa: 'NOVO',
-    temperatura: 'MORNO', observacoes: '', valorEstimado: '', dataContato: '',
-  })
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setErro('')
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-
-      if (!res.ok) throw new Error()
-
-      const novo = await res.json()
-      setLeads(prev => [{ ...novo, cliente: null }, ...prev])
-      setModalAberto(false)
-      router.refresh()
-    } catch {
-      setErro('Erro ao salvar. Tente novamente.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function atualizarEtapa(id: string, etapa: string) {
     const lead = leads.find(l => l.id === id)
@@ -179,7 +118,7 @@ export default function ComercialClient({ leads: inicial }: { leads: Lead[] }) {
           ))}
         </div>
         <button
-          onClick={() => { setForm({ nome: '', email: '', telefone: '', areaInteresse: '', origem: '', etapa: 'NOVO', temperatura: 'MORNO', observacoes: '', valorEstimado: '', dataContato: '' }); setErro(''); setModalAberto(true) }}
+          onClick={() => router.push('/comercial/novo')}
           className="flex items-center gap-2 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-all hover:opacity-90"
           style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
         >
@@ -309,101 +248,6 @@ export default function ComercialClient({ leads: inicial }: { leads: Lead[] }) {
         </div>
       )}
 
-      {/* Modal */}
-      {modalAberto && (
-        <>
-          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.72)' }} />
-          <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
-          <div className="flex min-h-full items-start justify-center px-4 py-8">
-          <div className="relative w-full max-w-lg rounded-2xl border border-white/10" style={{ background: 'var(--surface)' }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 rounded-t-2xl" style={{ background: 'var(--surface)' }}>
-              <h2 className="text-base font-semibold text-foreground">Novo Lead</h2>
-              <button onClick={() => setModalAberto(false)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className={labelClass}>Nome *</label>
-                  <input name="nome" value={form.nome} onChange={handleChange} className={inputClass} required />
-                </div>
-                <div>
-                  <label className={labelClass}>E-mail</label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Telefone</label>
-                  <input name="telefone" value={form.telefone} onChange={handleChange} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Área de Interesse</label>
-                  <select name="areaInteresse" value={form.areaInteresse} onChange={handleChange} className={inputClass}>
-                    <option value="">Selecione</option>
-                    {areaOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Como nos conheceu</label>
-                  <select name="origem" value={form.origem} onChange={handleChange} className={inputClass}>
-                    <option value="">Selecione</option>
-                    {origemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Etapa</label>
-                  <select name="etapa" value={form.etapa} onChange={handleChange} className={inputClass}>
-                    {etapas.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Temperatura</label>
-                  <select name="temperatura" value={form.temperatura} onChange={handleChange} className={inputClass}>
-                    <option value="FRIO">Frio</option>
-                    <option value="MORNO">Morno</option>
-                    <option value="QUENTE">Quente</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Valor Estimado (R$)</label>
-                  <input type="number" name="valorEstimado" value={form.valorEstimado} onChange={handleChange} className={inputClass} step="0.01" min="0" />
-                </div>
-                <div>
-                  <label className={labelClass}>Data de Contato</label>
-                  <input type="date" name="dataContato" value={form.dataContato} onChange={handleChange} className={inputClass} />
-                </div>
-                <div className="col-span-2">
-                  <label className={labelClass}>Observações</label>
-                  <textarea name="observacoes" value={form.observacoes} onChange={handleChange} className={inputClass} rows={2} />
-                </div>
-              </div>
-
-              {erro && (
-                <div className="rounded-lg border border-red-400/30 bg-red-400/10 text-red-400 text-sm px-4 py-3 mt-4">{erro}</div>
-              )}
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setModalAberto(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-muted-foreground border border-white/10 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-black rounded-lg transition-all disabled:opacity-50 hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
-                >
-                  {loading ? 'Salvando...' : 'Salvar Lead'}
-                </button>
-              </div>
-            </form>
-          </div>
-          </div>
-          </div>
-          </div>
-        </>
-      )}
     </>
   )
 }

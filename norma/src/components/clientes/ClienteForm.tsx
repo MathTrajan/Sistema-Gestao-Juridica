@@ -5,6 +5,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { clienteSchema, type ClienteFormData } from '@/lib/schemas'
 
+interface Props {
+  clienteId?: string
+  initialData?: Partial<ClienteFormData>
+}
+
 const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
 const inputErrorClass = "w-full rounded-lg border border-red-400/60 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-red-400/80"
 const labelClass = "block text-xs font-semibold uppercase tracking-wide mb-1 text-muted-foreground"
@@ -39,8 +44,9 @@ const estadoOptions = [
   'SP','SE','TO',
 ]
 
-export default function ClienteForm() {
+export default function ClienteForm({ clienteId, initialData }: Props) {
   const router = useRouter()
+  const isEdit = !!clienteId
 
   const {
     register,
@@ -54,6 +60,7 @@ export default function ClienteForm() {
     defaultValues: {
       tipo: 'PESSOA_FISICA',
       status: 'ATIVO',
+      ...initialData,
     },
   })
 
@@ -86,8 +93,8 @@ export default function ClienteForm() {
         responsavelId: undefined,
       }
 
-      const res = await fetch('/api/clientes', {
-        method: 'POST',
+      const res = await fetch(isEdit ? `/api/clientes/${clienteId}` : '/api/clientes', {
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
@@ -98,7 +105,7 @@ export default function ClienteForm() {
         return
       }
 
-      router.push('/clientes')
+      router.push(isEdit ? `/clientes/${clienteId}` : '/clientes')
       router.refresh()
     } catch {
       setError('root', { message: 'Erro ao salvar. Verifique os dados e tente novamente.' })
@@ -293,7 +300,7 @@ export default function ClienteForm() {
           className="px-5 py-2 text-sm font-semibold text-black rounded-lg transition-all disabled:opacity-50"
           style={{ background: 'linear-gradient(135deg, #d4af37, #B8962A)' }}
         >
-          {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
+          {isSubmitting ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Salvar Cliente'}
         </button>
       </div>
     </form>
