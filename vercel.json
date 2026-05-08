@@ -1,7 +1,0 @@
-{
-  "buildCommand": "cd norma && npm run build",
-  "outputDirectory": "norma/.next",
-  "framework": "nextjs",
-  "installCommand": "cd norma && npm install",
-  "alias": ["norma-juridico.vercel.app"]
-}
