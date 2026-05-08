@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function PrazosPage() {
   const session = await auth()
-  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const userData = session?.user as { escritorioId?: string } | undefined
   const escritorioId = userData?.escritorioId
 
   const prazosRaw = await prisma.prazo

@@ -4,7 +4,7 @@ import ProcessosClient from '@/components/processos/ProcessosClient'
 
 export default async function ProcessosPage() {
   const session = await auth()
-  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const userData = session?.user as { escritorioId?: string } | undefined
   const escritorioId = userData?.escritorioId
 
   const processos = await prisma.processo

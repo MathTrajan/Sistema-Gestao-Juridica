@@ -20,10 +20,27 @@ const areaLabels: Record<string, string> = {
 
 export default async function UsuariosPage() {
   const session = await auth()
-  const escritorioId = (session?.user as any)?.escritorioId
-  const sessaoId = (session?.user as any)?.id
+  const userData = session?.user as {
+    escritorioId?: string
+    id?: string
+  } | undefined
+  const escritorioId = userData?.escritorioId
+  const sessaoId = userData?.id ?? ''
 
-  let rawUsuarios: any[] = []
+  type UsuarioRow = {
+    id: string
+    nome: string
+    email: string
+    perfil: string
+    area: string | null
+    oab: string | null
+    telefone: string | null
+    ativo: boolean
+    permissoes?: string[]
+    createdAt: Date
+  }
+
+  let rawUsuarios: UsuarioRow[] = []
   try {
     rawUsuarios = await prisma.usuario.findMany({
       where: { escritorioId },
@@ -60,7 +77,7 @@ export default async function UsuariosPage() {
     rawUsuarios = sem.map(u => ({ ...u, permissoes: [] as string[] }))
   }
 
-  const usuariosMapeados = rawUsuarios.map((u: any) => ({
+  const usuariosMapeados = rawUsuarios.map((u) => ({
     ...u,
     perfil: u.perfil as string,
     area: u.area as string | null,

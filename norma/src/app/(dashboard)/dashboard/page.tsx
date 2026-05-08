@@ -131,7 +131,7 @@ async function getDashboardData(escritorioId: string, periodo: string): Promise<
     _count: { _all: true },
   })
 
-  const statusSummary = processosStatus.map((item) => ({
+  const statusSummary: DashboardData['statusSummary'] = processosStatus.map((item) => ({
     label: statusLabelMap[item.status] ?? item.status,
     count: item._count._all,
     variant:
@@ -235,7 +235,7 @@ export default async function DashboardPage({
   const periodo = periodoOptions.find((option) => option.value === rawPeriodo)?.value ?? 'este-mes'
 
   const session = await auth()
-  const userData = session?.user as (typeof session.user & { escritorioId?: string }) | undefined
+  const userData = session?.user as { escritorioId?: string } | undefined
   const escritorioId = userData?.escritorioId ?? ''
 
   let data = getEmptyDashboardData()

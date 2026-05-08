@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Bell, Plus, Menu, Clock, Sparkles, Sun, Moon } from 'lucide-react'
+import { Search, Bell, Plus, Menu, Clock, Sparkles, Sun, Moon, Check } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -14,18 +14,18 @@ const pageConfig: Record<string, {
   btnLabel?: string
   btnHref?: string
 }> = {
-  '/dashboard':     { title: 'Dashboard',       subtitle: 'Painel de controle' },
-  '/clientes':      { title: 'Clientes',         subtitle: 'Gestão de clientes',    btnLabel: 'Novo Cliente',  btnHref: '/clientes/novo'  },
-  '/processos':     { title: 'Processos',        subtitle: 'Pipeline processual',   btnLabel: 'Novo Processo', btnHref: '/processos/novo' },
-  '/tarefas':       { title: 'Tarefas',          subtitle: 'Gestão de atividades',  btnLabel: 'Nova Tarefa',   btnHref: '/tarefas/novo'   },
-  '/prazos':        { title: 'Prazos',           subtitle: 'Controle de prazos',    btnLabel: 'Novo Prazo',    btnHref: '/prazos/novo'    },
-  '/comercial':     { title: 'Comercial / CRM',  subtitle: 'Pipeline comercial' },
-  '/financeiro':    { title: 'Financeiro',       subtitle: 'Gestão financeira' },
-  '/controladoria': { title: 'Controladoria',    subtitle: 'Relatórios e controle' },
-  '/marketing':     { title: 'Marketing',        subtitle: 'Campanhas e leads' },
-  '/usuarios':      { title: 'Usuários',         subtitle: 'Gestão de acesso' },
-  '/relatorios':    { title: 'Relatórios',       subtitle: 'Análises e exportações' },
-  '/configuracoes': { title: 'Configurações',    subtitle: 'Preferências do sistema' },
+  '/dashboard': { title: 'Dashboard', subtitle: 'Painel de controle' },
+  '/clientes': { title: 'Clientes', subtitle: 'Gestao de clientes', btnLabel: 'Novo Cliente', btnHref: '/clientes/novo' },
+  '/processos': { title: 'Processos', subtitle: 'Pipeline processual', btnLabel: 'Novo Processo', btnHref: '/processos/novo' },
+  '/tarefas': { title: 'Tarefas', subtitle: 'Gestao de atividades', btnLabel: 'Nova Tarefa', btnHref: '/tarefas/novo' },
+  '/prazos': { title: 'Prazos', subtitle: 'Controle de prazos', btnLabel: 'Novo Prazo', btnHref: '/prazos/novo' },
+  '/comercial': { title: 'Comercial / CRM', subtitle: 'Pipeline comercial' },
+  '/financeiro': { title: 'Financeiro', subtitle: 'Gestao financeira' },
+  '/controladoria': { title: 'Controladoria', subtitle: 'Relatorios e controle' },
+  '/marketing': { title: 'Marketing', subtitle: 'Campanhas e leads' },
+  '/usuarios': { title: 'Usuarios', subtitle: 'Gestao de acesso' },
+  '/relatorios': { title: 'Relatorios', subtitle: 'Analises e exportacoes' },
+  '/configuracoes': { title: 'Configuracoes', subtitle: 'Preferencias do sistema' },
 }
 
 interface Notificacao {
@@ -46,13 +46,35 @@ export default function Topbar() {
   const config =
     Object.entries(pageConfig).find(
       ([path]) => pathname === path || pathname.startsWith(`${path}/`)
-    )?.[1] ?? { title: 'Norma', subtitle: 'Sistema jurídico' }
+    )?.[1] ?? { title: 'Norma', subtitle: 'Sistema juridico' }
 
   const [busca, setBusca] = useState('')
   const [buscaFocused, setBuscaFocused] = useState(false)
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
+  const [notificacoesLidas, setNotificacoesLidas] = useState<string[]>([])
   const [dropdownAberto, setDropdownAberto] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const notificacoesStorageKey = 'norma_notificacoes_lidas'
+
+  useEffect(() => {
+    const proximasLidas = !notificacoesStorageKey
+      ? []
+      : (() => {
+          try {
+            const salvas = localStorage.getItem(notificacoesStorageKey)
+            return salvas ? JSON.parse(salvas) : []
+          } catch {
+            return []
+          }
+        })()
+
+    const frame = window.requestAnimationFrame(() => {
+      setNotificacoesLidas(proximasLidas)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [notificacoesStorageKey])
 
   useEffect(() => {
     fetch('/api/notificacoes')
@@ -63,9 +85,11 @@ export default function Topbar() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownAberto(false)
+      }
     }
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -77,8 +101,23 @@ export default function Topbar() {
     }
   }
 
-  const urgentes = notificacoes.filter(n => n.urgente).length
-  const total = notificacoes.length
+  function persistirNotificacoesLidas(ids: string[]) {
+    setNotificacoesLidas(ids)
+    if (!notificacoesStorageKey) return
+
+    try {
+      localStorage.setItem(notificacoesStorageKey, JSON.stringify(ids))
+    } catch {}
+  }
+
+  function marcarComoLida(id: string) {
+    if (notificacoesLidas.includes(id)) return
+    persistirNotificacoesLidas([...notificacoesLidas, id])
+  }
+
+  const notificacoesVisiveis = notificacoes.filter(n => !notificacoesLidas.includes(n.id))
+  const urgentes = notificacoesVisiveis.filter(n => n.urgente).length
+  const total = notificacoesVisiveis.length
 
   const topbarBg = isDark
     ? 'rgba(20,20,20,0.88)'
@@ -108,7 +147,6 @@ export default function Topbar() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Hamburger (mobile) */}
         <button
           onClick={toggleMobile}
           className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 md:hidden"
@@ -118,7 +156,6 @@ export default function Topbar() {
           <Menu size={18} />
         </button>
 
-        {/* Page title */}
         <motion.div
           key={pathname}
           initial={{ opacity: 0, x: -8 }}
@@ -127,7 +164,7 @@ export default function Topbar() {
           className="min-w-0"
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.36em]" style={{ color: subtitleColor }}>
-            {config.subtitle ?? 'Navegação'}
+            {config.subtitle ?? 'Navegacao'}
           </p>
           <h2 className="text-[17px] font-semibold leading-tight" style={{ color: titleColor }}>
             {config.title}
@@ -135,8 +172,6 @@ export default function Topbar() {
         </motion.div>
 
         <div className="ml-auto flex flex-1 items-center justify-end gap-2.5">
-
-          {/* Search */}
           <motion.div
             className="hidden sm:flex items-center gap-2.5 rounded-xl px-3.5 py-2 transition-all duration-200"
             style={{
@@ -162,7 +197,6 @@ export default function Topbar() {
             />
           </motion.div>
 
-          {/* Theme toggle */}
           <motion.button
             onClick={toggleTheme}
             className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150"
@@ -197,13 +231,12 @@ export default function Topbar() {
             </AnimatePresence>
           </motion.button>
 
-          {/* Notifications */}
           <div ref={dropdownRef} className="relative flex-shrink-0">
             <motion.button
               onClick={() => setDropdownAberto(v => !v)}
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150"
               style={iconBtnStyle}
-              aria-label="Notificações"
+              aria-label="Notificacoes"
               whileHover={{ scale: 1.06, y: -1 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -240,12 +273,14 @@ export default function Topbar() {
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ duration: 0.18 }}
                 >
-                  <div className="px-5 py-4"
-                    style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)' }}>
+                  <div
+                    className="px-5 py-4"
+                    style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)' }}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: titleColor }}>Notificações</p>
-                        <p className="text-xs" style={{ color: subtitleColor }}>Atualizações do sistema</p>
+                        <p className="text-sm font-semibold" style={{ color: titleColor }}>Notificacoes</p>
+                        <p className="text-xs" style={{ color: subtitleColor }}>Atualizacoes do sistema</p>
                       </div>
                       {urgentes > 0 && (
                         <motion.span
@@ -261,39 +296,57 @@ export default function Topbar() {
                   </div>
 
                   <div className="max-h-72 overflow-y-auto">
-                    {notificacoes.length === 0 ? (
+                    {notificacoesVisiveis.length === 0 ? (
                       <div className="p-6 text-center text-sm" style={{ color: subtitleColor }}>
                         <Sparkles size={20} className="mx-auto mb-2 opacity-40" />
-                        Nenhuma notificação pendente
+                        Nenhuma notificacao pendente
                       </div>
                     ) : (
-                      notificacoes.map((item, index) => (
+                      notificacoesVisiveis.map((item, index) => (
                         <motion.div
                           key={item.id}
                           initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.04 }}
                         >
-                          <Link
-                            href={item.href}
-                            onClick={() => setDropdownAberto(false)}
-                            className="flex gap-3 px-5 py-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                          <div
+                            className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                             style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)' }}
                           >
-                            <div
-                              className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl')}
-                              style={item.urgente
-                                ? { background: '#ef4444', color: '#fff', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }
-                                : { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: subtitleColor }
-                              }
+                            <Link
+                              href={item.href}
+                              onClick={() => {
+                                marcarComoLida(item.id)
+                                setDropdownAberto(false)
+                              }}
+                              className="flex min-w-0 flex-1 gap-3"
                             >
-                              {item.tipo === 'prazo' ? <Clock size={13} /> : <Sparkles size={13} />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium" style={{ color: titleColor }}>{item.titulo}</p>
-                              <p className="mt-0.5 text-xs" style={{ color: subtitleColor }}>{item.descricao}</p>
-                            </div>
-                          </Link>
+                              <div
+                                className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl')}
+                                style={item.urgente
+                                  ? { background: '#ef4444', color: '#fff', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }
+                                  : { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: subtitleColor }
+                                }
+                              >
+                                {item.tipo === 'prazo' ? <Clock size={13} /> : <Sparkles size={13} />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium" style={{ color: titleColor }}>{item.titulo}</p>
+                                <p className="mt-0.5 text-xs" style={{ color: subtitleColor }}>{item.descricao}</p>
+                              </div>
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={() => marcarComoLida(item.id)}
+                              className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors"
+                              style={iconBtnStyle}
+                              title="Marcar como lida"
+                              aria-label={`Marcar ${item.titulo} como lida`}
+                            >
+                              <Check size={14} />
+                            </button>
+                          </div>
                         </motion.div>
                       ))
                     )}
@@ -303,7 +356,6 @@ export default function Topbar() {
             </AnimatePresence>
           </div>
 
-          {/* Action button */}
           {config.btnLabel && config.btnHref && (
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link

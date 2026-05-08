@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { AREAS_JURIDICAS, TIPOS_PROCESSO, FASES_PROCESSO, STATUS_PROCESSO } from '@/lib/constants'
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const { searchParams } = new URL(req.url)
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
           cliente: { select: { nomeCompleto: true } },
         },
       })
-      return NextResponse.json(processos)
+      return apiJsonResponse(processos)
     }
 
     const [processos, total] = await Promise.all([
@@ -60,7 +61,7 @@ export async function GET(req: Request) {
       prisma.processo.count({ where }),
     ])
 
-    return NextResponse.json({
+    return apiJsonResponse({
       data: processos,
       pagination: {
         total,
@@ -71,7 +72,7 @@ export async function GET(req: Request) {
     })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
