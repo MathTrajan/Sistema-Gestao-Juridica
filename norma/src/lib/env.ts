@@ -13,6 +13,9 @@ const envSchema = z.object({
     ),
   NEXTAUTH_URL: z.string().url('NEXTAUTH_URL deve ser uma URL válida'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // DataJud — opcional; endpoints de sync retornam 503 quando ausente
+  DATAJUD_API_KEY: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 })
 
 function validateEnv() {

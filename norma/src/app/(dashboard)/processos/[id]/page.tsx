@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Plus } from 'lucide-react'
 import ProcessoEditModal from '@/components/processos/ProcessoEditModal'
 import ProcessoDeleteButton from '@/components/processos/ProcessoDeleteButton'
+import SincronizarButton from '@/components/processos/SincronizarButton'
 
 const areaLabels: Record<string, string> = {
   TRABALHISTA: 'Trabalhista', CIVIL: 'Cível', TRIBUTARIO: 'Tributário',
@@ -43,6 +44,14 @@ const statusPrazoConfig: Record<string, { label: string; color: string }> = {
   SUSPENSO: { label: 'Suspenso', color: 'bg-gray-100 text-gray-600' },
 }
 
+const grauLabels: Record<string, string> = {
+  G1: '1º Grau',
+  G2: '2º Grau',
+  GS: 'Tribunal Superior',
+}
+
+type AssuntoDataJud = { codigo: number; nome: string }
+
 export default async function ProcessoDetalhePage({
   params,
 }: {
@@ -63,7 +72,7 @@ export default async function ProcessoDetalhePage({
         },
         prazos: { orderBy: { dataFinal: 'asc' } },
         andamentos: { orderBy: { data: 'desc' } },
-        movimentacoes: { orderBy: { data: 'desc' }, take: 10 },
+        movimentacoes: { orderBy: { data: 'desc' }, take: 50 },
       },
     }),
     prisma.usuario.findMany({
@@ -77,6 +86,19 @@ export default async function ProcessoDetalhePage({
 
   const fase = faseConfig[processo.fase]
   const status = statusConfig[processo.status]
+
+  const assuntos = Array.isArray(processo.assuntos)
+    ? (processo.assuntos as unknown as AssuntoDataJud[])
+    : []
+  const temDadosDataJud =
+    !!processo.classeNome ||
+    !!processo.orgaoJulgador ||
+    !!processo.grau ||
+    !!processo.sistema ||
+    !!processo.formato ||
+    assuntos.length > 0 ||
+    !!processo.dataAjuizamentoDataJud ||
+    !!processo.dataUltimaAtualizacaoDataJud
 
   return (
     <div className="p-8">
@@ -105,6 +127,12 @@ export default async function ProcessoDetalhePage({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <SincronizarButton
+            processoId={processo.id}
+            temNumero={!!processo.numero}
+            temTribunal={!!processo.tribunal}
+            lastSyncAt={processo.lastSyncAt?.toISOString() ?? null}
+          />
           <ProcessoDeleteButton processoId={processo.id} />
           <ProcessoEditModal
           processoId={processo.id}
@@ -155,6 +183,99 @@ export default async function ProcessoDetalhePage({
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Observações</div>
                 <p className="text-sm text-gray-600">{processo.observacoes}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Dados Oficiais (DataJud / CNJ) */}
+          <div className="bg-white border border-blue-100 rounded-xl shadow-sm">
+            <div className="px-5 py-4 border-b border-blue-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-gray-700">Dados Oficiais</h2>
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 uppercase tracking-wide">
+                  DataJud / CNJ
+                </span>
+              </div>
+              {processo.dataUltimaAtualizacaoDataJud && (
+                <span className="text-xs text-gray-400">
+                  Atualizado no tribunal:{' '}
+                  {new Date(processo.dataUltimaAtualizacaoDataJud).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              )}
+            </div>
+            {!temDadosDataJud ? (
+              <div className="p-8 text-center text-gray-400 text-sm">
+                {processo.numero && processo.tribunal
+                  ? 'Sincronize com o DataJud para puxar classe processual, assuntos, órgão julgador e demais dados oficiais.'
+                  : 'Cadastre o número e tribunal do processo para sincronizar com o DataJud.'}
+              </div>
+            ) : (
+              <div className="p-5 flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {processo.classeNome && (
+                    <Info
+                      label="Classe Processual"
+                      value={
+                        processo.classeCodigo
+                          ? `${processo.classeNome} (${processo.classeCodigo})`
+                          : processo.classeNome
+                      }
+                    />
+                  )}
+                  {processo.orgaoJulgador && (
+                    <Info label="Órgão Julgador" value={processo.orgaoJulgador} />
+                  )}
+                  {processo.grau && (
+                    <Info label="Grau" value={grauLabels[processo.grau] ?? processo.grau} />
+                  )}
+                  {processo.sistema && <Info label="Sistema" value={processo.sistema} />}
+                  {processo.formato && <Info label="Formato" value={processo.formato} />}
+                  {processo.nivelSigilo != null && (
+                    <Info
+                      label="Nível de Sigilo"
+                      value={
+                        processo.nivelSigilo === 0
+                          ? 'Público (0)'
+                          : `Restrito (${processo.nivelSigilo})`
+                      }
+                    />
+                  )}
+                  {processo.dataAjuizamentoDataJud && (
+                    <Info
+                      label="Data de Ajuizamento"
+                      value={new Date(processo.dataAjuizamentoDataJud).toLocaleDateString(
+                        'pt-BR'
+                      )}
+                    />
+                  )}
+                  {processo.municipioIbge && (
+                    <Info label="Município (IBGE)" value={String(processo.municipioIbge)} />
+                  )}
+                </div>
+                {assuntos.length > 0 && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                      Assuntos
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {assuntos.map((a) => (
+                        <span
+                          key={a.codigo}
+                          title={`Código CNJ ${a.codigo}`}
+                          className="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-700"
+                        >
+                          {a.nome}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -256,6 +377,68 @@ export default async function ProcessoDetalhePage({
                     <div>
                       <p className="text-sm text-gray-800">{a.texto}</p>
                       <p className="text-xs text-gray-400 mt-1">{new Date(a.data).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Movimentações DataJud */}
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-900 text-sm">
+                  Movimentações ({processo.movimentacoes.length})
+                </span>
+                <span className="text-xs text-gray-400 font-normal">via DataJud / CNJ</span>
+              </div>
+              <SincronizarButton
+                processoId={processo.id}
+                temNumero={!!processo.numero}
+                temTribunal={!!processo.tribunal}
+                lastSyncAt={processo.lastSyncAt?.toISOString() ?? null}
+              />
+            </div>
+            {processo.movimentacoes.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-sm">
+                {processo.numero && processo.tribunal
+                  ? 'Nenhuma movimentação importada — clique em "Sincronizar DataJud" acima'
+                  : 'Cadastre o número e tribunal do processo para sincronizar'}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {processo.movimentacoes.map((mov) => (
+                  <div key={mov.id} className="flex gap-4 px-5 py-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          mov.fonte === 'DATAJUD' ? 'bg-blue-500' : 'bg-gray-400'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800">{mov.descricao}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-400">
+                          {new Date(mov.data).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {mov.fonte === 'DATAJUD' && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 uppercase tracking-wide">
+                            DataJud
+                          </span>
+                        )}
+                        {mov.fonte === 'MANUAL' && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 uppercase tracking-wide">
+                            Manual
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
