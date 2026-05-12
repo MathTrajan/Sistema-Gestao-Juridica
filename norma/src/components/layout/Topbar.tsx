@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Bell, Plus, Menu, Clock, Sparkles, Sun, Moon, Check } from 'lucide-react'
+import { Search, Bell, Plus, Menu, Clock, Sparkles, Sun, Moon, Check, FileSearch, Scale } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -30,11 +30,27 @@ const pageConfig: Record<string, {
 
 interface Notificacao {
   id: string
-  tipo: 'prazo' | 'tarefa'
+  tipo: 'prazo' | 'tarefa' | 'datajud_movimentacao' | 'datajud_processo'
   titulo: string
   descricao: string
   urgente: boolean
   href: string
+  /** true quando vem da tabela Notificacao (id começa com "notif-") */
+  persistida?: boolean
+}
+
+// Ícone por tipo de notificação
+function iconForTipo(tipo: Notificacao['tipo']) {
+  switch (tipo) {
+    case 'prazo':
+      return <Clock size={13} />
+    case 'tarefa':
+      return <Sparkles size={13} />
+    case 'datajud_movimentacao':
+      return <FileSearch size={13} />
+    case 'datajud_processo':
+      return <Scale size={13} />
+  }
 }
 
 export default function Topbar() {
@@ -113,6 +129,12 @@ export default function Topbar() {
   function marcarComoLida(id: string) {
     if (notificacoesLidas.includes(id)) return
     persistirNotificacoesLidas([...notificacoesLidas, id])
+
+    // Notificações persistidas (id prefixado "notif-") são marcadas também no banco
+    if (id.startsWith('notif-')) {
+      const realId = id.slice('notif-'.length)
+      fetch(`/api/notificacoes/${realId}/lida`, { method: 'POST' }).catch(() => {})
+    }
   }
 
   const notificacoesVisiveis = notificacoes.filter(n => !notificacoesLidas.includes(n.id))
@@ -323,12 +345,15 @@ export default function Topbar() {
                             >
                               <div
                                 className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl')}
-                                style={item.urgente
-                                  ? { background: '#ef4444', color: '#fff', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }
-                                  : { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: subtitleColor }
+                                style={
+                                  item.urgente
+                                    ? { background: '#ef4444', color: '#fff', boxShadow: '0 0 10px rgba(239,68,68,0.4)' }
+                                    : item.tipo === 'datajud_processo' || item.tipo === 'datajud_movimentacao'
+                                    ? { background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
+                                    : { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: subtitleColor }
                                 }
                               >
-                                {item.tipo === 'prazo' ? <Clock size={13} /> : <Sparkles size={13} />}
+                                {iconForTipo(item.tipo)}
                               </div>
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-medium" style={{ color: titleColor }}>{item.titulo}</p>
