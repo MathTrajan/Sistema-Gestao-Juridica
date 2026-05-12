@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Users, FileText, CheckSquare, Clock,
   TrendingUp, DollarSign, BookOpen, Megaphone, BarChart2,
   Settings, LogOut, UserCog, ChevronLeft, ChevronRight,
-  Pin, PinOff, MousePointer2,
+  Pin, PinOff, MousePointer2, Search,
 } from 'lucide-react'
 
 const cinzel = Cinzel({
@@ -41,6 +41,7 @@ const navItems = [
   { label: 'Dashboard',  href: '/dashboard',  icon: LayoutDashboard },
   { label: 'Clientes',   href: '/clientes',   icon: Users },
   { label: 'Processos',  href: '/processos',  icon: FileText },
+  { label: 'DataJud',    href: '/datajud',    icon: Search },
   { label: 'Tarefas',    href: '/tarefas',    icon: CheckSquare },
   { label: 'Prazos',     href: '/prazos',     icon: Clock },
 ]
@@ -59,7 +60,7 @@ const systemItems = [
 ]
 
 const AREA_ROUTES: Record<string, string[]> = {
-  JURIDICO:      ['/dashboard', '/clientes', '/processos', '/tarefas', '/prazos'],
+  JURIDICO:      ['/dashboard', '/clientes', '/processos', '/datajud', '/tarefas', '/prazos'],
   COMERCIAL:     ['/dashboard', '/clientes', '/comercial'],
   FINANCEIRO:    ['/dashboard', '/financeiro'],
   CONTROLADORIA: ['/dashboard', '/controladoria'],
