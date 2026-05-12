@@ -28,6 +28,8 @@ model Escritorio {
   tarefas    Tarefa[]
   leads      Lead[]
   financeiro Lancamento[]
+  advogadosMonitorados AdvogadoMonitorado[]
+  notificacoes         Notificacao[]
 
   @@map("escritorios")
 }
@@ -61,6 +63,8 @@ model Usuario {
   processosResponsavel Processo[] @relation("ProcessoResponsavel")
   atendimentos         Atendimento[]
   comentarios          Comentario[]
+  advogadosMonitorados AdvogadoMonitorado[]
+  notificacoes         Notificacao[]
 
   @@unique([email, escritorioId])
   @@index([escritorioId])
@@ -479,4 +483,60 @@ model Comentario {
   usuario   Usuario? @relation(fields: [usuarioId], references: [id])
 
   @@map("comentarios")
+}
+
+// ─── ADVOGADOS MONITORADOS (DataJud) ──────────────────────────────────────────
+// Para cada OAB cadastrada aqui, o cron diário consulta o DataJud em cada
+// tribunal selecionado e cria Notificacao quando descobre processos novos.
+model AdvogadoMonitorado {
+  id                   String   @id @default(cuid())
+  oab                  String   // ex: "OAB/GO 12345" ou apenas "12345"
+  nome                 String?  // opcional, ajuda a filtrar resultados
+  tribunais            String[] // ex: ["TJGO", "TRF1", "STJ"]
+  ativo                Boolean  @default(true)
+  ultimaVerificacaoAt  DateTime?
+  ultimoResultadoCount Int?     // qtd de processos encontrados na última verificação
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  escritorioId String
+  escritorio   Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuarioId    String?    // criador (opcional)
+  usuario      Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@unique([escritorioId, oab])
+  @@index([escritorioId, ativo])
+  @@map("advogados_monitorados")
+}
+
+// ─── NOTIFICAÇÕES PERSISTIDAS ─────────────────────────────────────────────────
+// Notificações que precisam sobreviver entre sessões. As notificações derivadas
+// (prazos próximos, tarefas vencidas) continuam sendo calculadas on-the-fly.
+model Notificacao {
+  id        String          @id @default(cuid())
+  tipo      TipoNotificacao
+  titulo    String
+  descricao String?
+  link      String?         // rota interna para abrir ao clicar
+  metadata  Json?           // dados extras (numero CNJ, tribunal, advogadoMonitoradoId, etc)
+  lida      Boolean         @default(false)
+  urgente   Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  lidaAt    DateTime?
+
+  escritorioId String
+  escritorio   Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuarioId    String?    // null = visível para todos do escritório
+  usuario      Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@index([escritorioId, lida, createdAt])
+  @@index([escritorioId, usuarioId])
+  @@map("notificacoes")
+}
+
+enum TipoNotificacao {
+  DATAJUD_MOVIMENTACAO        // movimentação nova em processo já cadastrado
+  DATAJUD_PROCESSO_DESCOBERTO // processo novo descoberto via OAB monitorada
+  PRAZO_PROXIMO               // reservado p/ futuro
+  TAREFA_ATRASADA             // reservado p/ futuro
 }

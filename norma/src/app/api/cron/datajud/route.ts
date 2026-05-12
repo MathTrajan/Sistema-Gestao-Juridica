@@ -1,9 +1,19 @@
 import { prisma } from '@/lib/prisma'
 import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
-import { buscarProcessoDataJud } from '@/lib/datajud'
+import {
+  buscarProcessoDataJud,
+  buscarProcessosPorAdvogado,
+} from '@/lib/datajud'
 
 // Vercel chama este endpoint via cron (vercel.json) às 06:00 UTC diariamente.
 // O header Authorization: Bearer <CRON_SECRET> protege contra chamadas externas.
+//
+// Faz 2 coisas em sequência:
+//   A) Sincroniza movimentações de TODOS os processos ativos do escritório.
+//      Para cada movimentação nova, cria Notificacao(DATAJUD_MOVIMENTACAO).
+//   B) Para cada AdvogadoMonitorado ativo, consulta DataJud por OAB em cada
+//      tribunal; cria Notificacao(DATAJUD_PROCESSO_DESCOBERTO) para processos
+//      não cadastrados ainda no escritório.
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
@@ -17,7 +27,7 @@ export async function GET(req: Request) {
     return apiErrorResponse('DATAJUD_API_KEY não configurada', 503)
   }
 
-  // Só sincroniza processos ativos com número e tribunal definidos
+  // ─── A) Sincroniza processos ativos ─────────────────────────────────────────
   const processos = await prisma.processo.findMany({
     where: {
       numero: { not: null },
@@ -36,14 +46,15 @@ export async function GET(req: Request) {
       numero: true,
       tribunal: true,
       lastSyncAt: true,
+      escritorioId: true,
+      cliente: { select: { nomeCompleto: true } },
     },
   })
 
-  const resultados = {
+  const sincronizacao = {
     processados: 0,
     novosTotal: 0,
     erros: 0,
-    detalhes: [] as { processoId: string; novas: number; erro?: string }[],
   }
 
   for (const processo of processos) {
@@ -61,10 +72,7 @@ export async function GET(req: Request) {
         apiKey
       )
 
-      if (!dados) {
-        resultados.detalhes.push({ processoId: processo.id, novas: 0 })
-        continue
-      }
+      if (!dados) continue
 
       const existentes = await prisma.movimentacao.findMany({
         where: { processoId: processo.id, fonte: 'DATAJUD' },
@@ -92,6 +100,26 @@ export async function GET(req: Request) {
             codigoExterno: String(m.codigo),
           })),
         })
+
+        // Cria notificação resumindo as novas movimentações
+        const ultima = novas[0]
+        await prisma.notificacao.create({
+          data: {
+            escritorioId: processo.escritorioId,
+            tipo: 'DATAJUD_MOVIMENTACAO',
+            titulo:
+              novas.length === 1
+                ? `Nova movimentação: ${processo.numero}`
+                : `${novas.length} novas movimentações: ${processo.numero}`,
+            descricao: `${processo.cliente.nomeCompleto} — ${ultima.nome}`,
+            link: `/processos/${processo.id}`,
+            metadata: {
+              processoId: processo.id,
+              numeroCNJ: processo.numero,
+              quantidade: novas.length,
+            },
+          },
+        })
       }
 
       await prisma.processo.update({
@@ -99,18 +127,106 @@ export async function GET(req: Request) {
         data: { lastSyncAt: new Date() },
       })
 
-      resultados.processados++
-      resultados.novosTotal += novas.length
-      resultados.detalhes.push({ processoId: processo.id, novas: novas.length })
-    } catch (err: any) {
-      resultados.erros++
-      resultados.detalhes.push({
-        processoId: processo.id,
-        novas: 0,
-        erro: err.message,
-      })
+      sincronizacao.processados++
+      sincronizacao.novosTotal += novas.length
+    } catch {
+      sincronizacao.erros++
     }
   }
 
-  return apiJsonResponse(resultados)
+  // ─── B) Monitoramento por OAB ───────────────────────────────────────────────
+  const monitorados = await prisma.advogadoMonitorado.findMany({
+    where: { ativo: true },
+    select: {
+      id: true,
+      oab: true,
+      nome: true,
+      tribunais: true,
+      escritorioId: true,
+    },
+  })
+
+  const monitoramento = {
+    advogadosVerificados: 0,
+    descobertos: 0,
+    erros: 0,
+  }
+
+  for (const adv of monitorados) {
+    // Processos já cadastrados no escritório → set de números só com dígitos
+    const cadastrados = await prisma.processo.findMany({
+      where: { escritorioId: adv.escritorioId, numero: { not: null } },
+      select: { numero: true },
+    })
+    const numerosExistentes = new Set(
+      cadastrados.map((p) => (p.numero ?? '').replace(/[^0-9]/g, ''))
+    )
+
+    let totalEncontrados = 0
+
+    for (const tribunal of adv.tribunais) {
+      try {
+        const resultados = await buscarProcessosPorAdvogado(
+          adv.oab,
+          tribunal,
+          apiKey,
+          adv.nome ?? undefined
+        )
+        totalEncontrados += resultados.length
+
+        for (const proc of resultados) {
+          const digitos = (proc.numeroProcesso ?? '').replace(/[^0-9]/g, '')
+          if (!digitos || numerosExistentes.has(digitos)) continue
+
+          // Verifica se já existe notificação não-lida para este número
+          // (evita spam diário do mesmo processo descoberto)
+          const jaNotificado = await prisma.notificacao.findFirst({
+            where: {
+              escritorioId: adv.escritorioId,
+              tipo: 'DATAJUD_PROCESSO_DESCOBERTO',
+              metadata: { path: ['numeroCNJ'], equals: proc.numeroProcesso },
+            },
+            select: { id: true },
+          })
+          if (jaNotificado) continue
+
+          await prisma.notificacao.create({
+            data: {
+              escritorioId: adv.escritorioId,
+              tipo: 'DATAJUD_PROCESSO_DESCOBERTO',
+              titulo: `Novo processo na OAB ${adv.oab}`,
+              descricao: `${proc.numeroProcesso} — ${tribunal}`,
+              link: `/processos/novo?numero=${encodeURIComponent(proc.numeroProcesso)}&tribunal=${encodeURIComponent(tribunal)}`,
+              urgente: false,
+              metadata: {
+                numeroCNJ: proc.numeroProcesso,
+                tribunal,
+                grau: proc.grau,
+                dataAjuizamento: proc.dataAjuizamento,
+                advogadoMonitoradoId: adv.id,
+                oab: adv.oab,
+              },
+            },
+          })
+
+          // Marca como já visto na cache local desta execução
+          numerosExistentes.add(digitos)
+          monitoramento.descobertos++
+        }
+      } catch {
+        monitoramento.erros++
+      }
+    }
+
+    await prisma.advogadoMonitorado.update({
+      where: { id: adv.id },
+      data: {
+        ultimaVerificacaoAt: new Date(),
+        ultimoResultadoCount: totalEncontrados,
+      },
+    })
+    monitoramento.advogadosVerificados++
+  }
+
+  return apiJsonResponse({ sincronizacao, monitoramento })
 }
