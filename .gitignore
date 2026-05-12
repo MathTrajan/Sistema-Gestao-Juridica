@@ -34,3 +34,8 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code internal files (never commit)
+CLAUDE.md
+AGENTS.md
+ENCODING_MODAL_FIX.md
