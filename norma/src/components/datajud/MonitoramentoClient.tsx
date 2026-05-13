@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Power, Check, X, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Power, Check, X, Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Lista enxuta de tribunais — espelha o que existe em AdvogadoSearchClient
@@ -60,6 +60,7 @@ export default function MonitoramentoClient({ initial }: Props) {
   const [itens, setItens] = useState<Monitorado[]>(initial)
   const [criando, setCriando] = useState(false)
   const [salvando, setSalvando] = useState(false)
+  const [verificandoId, setVerificandoId] = useState<string | null>(null)
   const [oab, setOab] = useState('')
   const [nome, setNome] = useState('')
   const [tribunaisSelecionados, setTribunaisSelecionados] = useState<string[]>([
@@ -120,6 +121,56 @@ export default function MonitoramentoClient({ initial }: Props) {
     } catch {
       setItens(itens) // rollback
       toast.error('Erro ao atualizar')
+    }
+  }
+
+  async function verificarAgora(item: Monitorado) {
+    if (!item.ativo) {
+      toast.error('Ative o monitoramento antes de verificar')
+      return
+    }
+    setVerificandoId(item.id)
+    try {
+      const res = await fetch(
+        `/api/advogados-monitorados/${item.id}/verificar`,
+        { method: 'POST' }
+      )
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error ?? 'Erro ao verificar')
+        return
+      }
+
+      // Atualiza o item localmente com a nova hora de verificação
+      setItens((prev) =>
+        prev.map((i) =>
+          i.id === item.id
+            ? {
+                ...i,
+                ultimaVerificacaoAt: new Date().toISOString(),
+                ultimoResultadoCount: data.totalEncontrados,
+              }
+            : i
+        )
+      )
+
+      if (data.descobertos > 0) {
+        toast.success(data.mensagem, { duration: 5000 })
+      } else {
+        toast.info(data.mensagem)
+      }
+
+      // Se houve erro em algum tribunal, mostra aviso adicional
+      if (data.errosPorTribunal?.length > 0) {
+        const lista = data.errosPorTribunal
+          .map((e: any) => e.tribunal)
+          .join(', ')
+        toast.warning(`Falha ao consultar: ${lista}`)
+      }
+    } catch {
+      toast.error('Erro de conexão')
+    } finally {
+      setVerificandoId(null)
     }
   }
 
@@ -295,6 +346,18 @@ export default function MonitoramentoClient({ initial }: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => verificarAgora(item)}
+                    disabled={!item.ativo || verificandoId === item.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(184,150,42,0.4)] bg-[rgba(184,150,42,0.1)] px-3 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[rgba(184,150,42,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Consultar DataJud agora (sem esperar o cron diário)"
+                  >
+                    <RefreshCw
+                      size={12}
+                      className={verificandoId === item.id ? 'animate-spin' : ''}
+                    />
+                    {verificandoId === item.id ? 'Verificando...' : 'Verificar agora'}
+                  </button>
                   <button
                     onClick={() => toggleAtivo(item)}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted-foreground transition hover:bg-white/10"
