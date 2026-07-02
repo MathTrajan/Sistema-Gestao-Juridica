@@ -4,13 +4,15 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Pencil, X, Calendar, Search, Link2, LayoutGrid, AlertTriangle } from 'lucide-react'
+import { Pencil, Trash2, X, Calendar, Search, Link2, LayoutGrid, AlertTriangle } from 'lucide-react'
+import ComentariosSection from '@/components/tarefas/ComentariosSection'
 
 const colunas = [
-  { id: 'A_FAZER', label: 'A Fazer', color: 'from-white/8 to-white/4', accent: 'text-muted-foreground' },
-  { id: 'EM_ANDAMENTO', label: 'Em Andamento', color: 'from-info/18 to-info/5', accent: 'text-info' },
-  { id: 'AGUARDANDO_REVISAO', label: 'Aguardando Revisao', color: 'from-warning/18 to-warning/5', accent: 'text-warning' },
-  { id: 'CONCLUIDO', label: 'Concluido', color: 'from-success/18 to-success/5', accent: 'text-success' },
+  { id: 'A_FAZER',           label: 'A Fazer',            color: 'from-white/8 to-white/4',      accent: 'text-muted-foreground' },
+  { id: 'EM_ANDAMENTO',      label: 'Em Andamento',       color: 'from-info/18 to-info/5',       accent: 'text-info' },
+  { id: 'AGUARDANDO_REVISAO',label: 'Aguardando Revisao', color: 'from-warning/18 to-warning/5', accent: 'text-warning' },
+  { id: 'CONCLUIDO',         label: 'Concluido',          color: 'from-success/18 to-success/5', accent: 'text-success' },
+  { id: 'CANCELADO',         label: 'Cancelado',          color: 'from-danger/10 to-danger/5',   accent: 'text-danger' },
 ]
 
 const prioridadeConfig: Record<string, { label: string; color: string }> = {
@@ -40,10 +42,15 @@ interface PrazoOpcao {
   status: string
 }
 
+interface UsuarioOpcao {
+  id: string
+  nome: string
+}
+
 const inputClass = 'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-gold/30'
 const labelClass = 'mb-1 block text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground'
 
-export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tarefa[] }) {
+export default function KanbanBoard({ tarefasIniciais, usuarios }: { tarefasIniciais: Tarefa[]; usuarios: UsuarioOpcao[] }) {
   const router = useRouter()
   const [tarefas, setTarefas] = useState<Tarefa[]>(tarefasIniciais)
   const [draggingId, setDraggingId] = useState<string | null>(null)
@@ -62,7 +69,9 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
     status: 'A_FAZER',
     dataVencimento: '',
     prazoId: '',
+    responsavelId: '',
   })
+  const [confirmandoDeletar, setConfirmandoDeletar] = useState<Record<string, boolean>>({})
   const dragItem = useRef<string | null>(null)
   const statusAnterior = useRef<string | null>(null)
 
@@ -86,9 +95,36 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
       status: tarefa.status,
       dataVencimento: tarefa.dataVencimento ? tarefa.dataVencimento.slice(0, 10) : '',
       prazoId: tarefa.prazoId ?? '',
+      responsavelId: tarefa.responsavel?.id ?? '',
     })
     setEditando(tarefa)
     setEditErro('')
+  }
+
+  async function handleDeletar(id: string) {
+    if (!confirmandoDeletar[id]) {
+      setConfirmandoDeletar(prev => ({ ...prev, [id]: true }))
+      setTimeout(() => {
+        setConfirmandoDeletar(prev => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+      }, 3000)
+      return
+    }
+
+    setConfirmandoDeletar(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+
+    const res = await fetch(`/api/tarefas/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setTarefas(prev => prev.filter(t => t.id !== id))
+      router.refresh()
+    }
   }
 
   function handleEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -112,12 +148,14 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
           status: editForm.status,
           dataVencimento: editForm.dataVencimento || null,
           prazoId: editForm.prazoId || null,
+          responsavelId: editForm.responsavelId || null,
         }),
       })
 
       if (!res.ok) throw new Error()
 
       const prazoSelecionado = prazosDisponiveis.find((prazo) => prazo.id === editForm.prazoId) ?? null
+      const responsavelSelecionado = usuarios.find(u => u.id === editForm.responsavelId) ?? null
 
       setTarefas((prev) =>
         prev.map((tarefa) =>
@@ -131,6 +169,7 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                 dataVencimento: editForm.dataVencimento ? new Date(editForm.dataVencimento).toISOString() : null,
                 prazoId: editForm.prazoId || null,
                 prazo: prazoSelecionado ? { id: prazoSelecionado.id, titulo: prazoSelecionado.titulo } : null,
+                responsavel: responsavelSelecionado ? { id: responsavelSelecionado.id, nome: responsavelSelecionado.nome } : null,
               }
             : tarefa
         )
@@ -352,14 +391,23 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${prioridade.color}`}>{prioridade.label}</span>
                             <button
                               onMouseDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                abrirEditar(tarefa)
-                              }}
+                              onClick={(e) => { e.stopPropagation(); abrirEditar(tarefa) }}
                               className="rounded p-1 text-muted-foreground transition-colors hover:bg-white/8 hover:text-gold"
                               title="Editar"
                             >
                               <Pencil size={12} />
+                            </button>
+                            <button
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => { e.stopPropagation(); handleDeletar(tarefa.id) }}
+                              className={`rounded px-1.5 py-1 text-xs font-medium transition-colors ${
+                                confirmandoDeletar[tarefa.id]
+                                  ? 'bg-danger/15 text-danger'
+                                  : 'text-muted-foreground hover:bg-danger/10 hover:text-danger'
+                              }`}
+                              title={confirmandoDeletar[tarefa.id] ? 'Confirmar exclusão' : 'Excluir'}
+                            >
+                              {confirmandoDeletar[tarefa.id] ? '?' : <Trash2 size={12} />}
                             </button>
                           </div>
                         </div>
@@ -484,13 +532,26 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                         {vencida ? ' !' : ''}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <button
-                          onClick={() => abrirEditar(tarefa)}
-                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-gold"
-                          title="Editar"
-                        >
-                          <Pencil size={14} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => abrirEditar(tarefa)}
+                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-gold"
+                            title="Editar"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeletar(tarefa.id)}
+                            className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                              confirmandoDeletar[tarefa.id]
+                                ? 'bg-danger/15 text-danger'
+                                : 'text-muted-foreground hover:bg-danger/10 hover:text-danger'
+                            }`}
+                            title={confirmandoDeletar[tarefa.id] ? 'Confirmar exclusão' : 'Excluir'}
+                          >
+                            {confirmandoDeletar[tarefa.id] ? 'Confirmar?' : <Trash2 size={14} />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -542,9 +603,20 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className={labelClass}>Data de vencimento</label>
-                  <input type="date" name="dataVencimento" value={editForm.dataVencimento} onChange={handleEditChange} className={inputClass} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Data de vencimento</label>
+                    <input type="date" name="dataVencimento" value={editForm.dataVencimento} onChange={handleEditChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Responsável</label>
+                    <select name="responsavelId" value={editForm.responsavelId} onChange={handleEditChange} className={inputClass}>
+                      <option value="">Sem responsável</option>
+                      {usuarios.map(u => (
+                        <option key={u.id} value={u.id}>{u.nome}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {editando.processo ? (
@@ -584,6 +656,9 @@ export default function KanbanBoard({ tarefasIniciais }: { tarefasIniciais: Tare
                 </button>
               </div>
             </form>
+            <div className="px-5 pb-5">
+              <ComentariosSection tarefaId={editando.id} />
+            </div>
           </div>
         </div>
       ) : null}

@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
+import { guardArea } from '@/lib/permissions'
 import { ETAPAS_FUNIL, TEMPERATURAS } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
+
+  const blocked = guardArea(session.user, 'COMERCIAL')
+  if (blocked) return blocked
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
@@ -28,27 +32,35 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       data.valorEstimado = !isNaN(v) ? v : null
     }
     if (body.dataContato !== undefined) data.dataContato = body.dataContato ? new Date(body.dataContato) : null
+    if (body.clienteId !== undefined) data.clienteId = body.clienteId || null
 
     await prisma.lead.updateMany({ where: { id, escritorioId }, data })
-    return NextResponse.json({ success: true })
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
+
+  const blocked = guardArea(session.user, 'COMERCIAL')
+  if (blocked) return blocked
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
 
   try {
-    await prisma.lead.deleteMany({ where: { id, escritorioId } })
-    return NextResponse.json({ success: true })
+    // Deletar atendimentos do lead antes de excluí-lo
+    await prisma.$transaction([
+      prisma.atendimento.deleteMany({ where: { leadId: id } }),
+      prisma.lead.deleteMany({ where: { id, escritorioId } }),
+    ])
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { AREAS_JURIDICAS, ORIGENS_CLIENTE, STATUS_CLIENTE, TIPOS_CLIENTE } from '@/lib/constants'
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const { searchParams } = new URL(req.url)
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
         orderBy: { nomeCompleto: 'asc' },
         select: { id: true, nomeCompleto: true },
       })
-      return NextResponse.json(clientes)
+      return apiJsonResponse(clientes)
     }
 
     const [clientes, total] = await Promise.all([
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
       prisma.cliente.count({ where }),
     ])
 
-    return NextResponse.json({
+    return apiJsonResponse({
       data: clientes,
       pagination: {
         total,
@@ -62,19 +62,19 @@ export async function GET(req: Request) {
     })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
 
   if (!body.nomeCompleto?.trim()) {
-    return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
+    return apiErrorResponse('Nome é obrigatório', 400)
   }
 
   try {
@@ -106,9 +106,9 @@ export async function POST(req: Request) {
         escritorioId,
       },
     })
-    return NextResponse.json(cliente, { status: 201 })
+    return apiJsonResponse(cliente, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

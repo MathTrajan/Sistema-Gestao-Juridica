@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, TrendingUp, TrendingDown, DollarSign, AlertCircle, Pencil, Trash2 } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, DollarSign, AlertCircle, Pencil, Trash2, Search } from 'lucide-react'
 
 interface Lancamento {
   id: string
@@ -56,15 +56,25 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
   const router = useRouter()
   const [lancamentos, setLancamentos] = useState(inicial)
   const [filtro, setFiltro] = useState<'TODOS' | 'ENTRADA' | 'SAIDA'>('TODOS')
-  // Maps id -> confirming for inline delete confirmation
+  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'PENDENTE' | 'PAGO' | 'ATRASADO' | 'CANCELADO'>('TODOS')
+  const [busca, setBusca] = useState('')
   const [confirmandoDeletar, setConfirmandoDeletar] = useState<Record<string, boolean>>({})
 
-  const filtrados = useMemo(() => (
-    lancamentos
-      .filter((l) => filtro === 'TODOS' ? true : l.tipo === filtro)
+  const filtrados = useMemo(() => {
+    const q = busca.trim().toLowerCase()
+    return lancamentos
+      .filter((l) => {
+        const matchTipo = filtro === 'TODOS' || l.tipo === filtro
+        const matchStatus = filtroStatus === 'TODOS' || l.status === filtroStatus
+        const matchBusca = !q ||
+          l.descricao.toLowerCase().includes(q) ||
+          l.cliente?.nomeCompleto.toLowerCase().includes(q) ||
+          l.categoria?.toLowerCase().includes(q)
+        return matchTipo && matchStatus && matchBusca
+      })
       .slice()
       .sort((a, b) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime())
-  ), [filtro, lancamentos])
+  }, [filtro, filtroStatus, busca, lancamentos])
 
   const grupos = useMemo(() => {
     const grouped: { key: string; label: string; items: Lancamento[] }[] = []
@@ -215,29 +225,59 @@ export default function FinanceiroClient({ lancamentos: inicial, clientes }: Pro
 
       {/* Tabela */}
       <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-1">
-            {(['TODOS', 'ENTRADA', 'SAIDA'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setFiltro(f)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  filtro === f ? 'text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
-                }`}
-                style={filtro === f ? { background: 'linear-gradient(135deg,#B8962A,#E4C874)' } : {}}
-              >
-                {f === 'TODOS' ? 'Todos' : f === 'ENTRADA' ? 'Receitas' : 'Despesas'}
-              </button>
-            ))}
+        <div className="border-b border-white/10 px-5 py-4 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1">
+              {(['TODOS', 'ENTRADA', 'SAIDA'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFiltro(f)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    filtro === f ? 'text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                  }`}
+                  style={filtro === f ? { background: 'linear-gradient(135deg,#B8962A,#E4C874)' } : {}}
+                >
+                  {f === 'TODOS' ? 'Todos' : f === 'ENTRADA' ? 'Receitas' : 'Despesas'}
+                </button>
+              ))}
+              <div className="w-px bg-white/10 mx-1" />
+              {(['TODOS', 'PENDENTE', 'PAGO', 'ATRASADO', 'CANCELADO'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setFiltroStatus(s)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    filtroStatus === s
+                      ? s === 'PAGO' ? 'bg-success-bg text-success'
+                        : s === 'ATRASADO' ? 'bg-danger-bg text-danger'
+                        : s === 'PENDENTE' ? 'bg-warning-bg text-warning'
+                        : s === 'CANCELADO' ? 'bg-white/10 text-muted-foreground'
+                        : 'text-black'
+                      : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                  }`}
+                  style={filtroStatus === s && s === 'TODOS' ? { background: 'linear-gradient(135deg,#B8962A,#E4C874)' } : {}}
+                >
+                  {s === 'TODOS' ? 'Qualquer status' : s === 'PAGO' ? 'Pagos' : s === 'PENDENTE' ? 'Pendentes' : s === 'ATRASADO' ? 'Atrasados' : 'Cancelados'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => router.push('/financeiro/novo')}
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-90 text-black shrink-0"
+              style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}
+            >
+              <Plus size={14} />
+              Novo Lançamento
+            </button>
           </div>
-          <button
-            onClick={() => router.push('/financeiro/novo')}
-            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-90 text-black"
-            style={{ background: 'linear-gradient(135deg,#B8962A,#E4C874)' }}
-          >
-            <Plus size={14} />
-            Novo Lançamento
-          </button>
+          <div className="relative">
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar por descrição, cliente, categoria..."
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-foreground outline-none transition focus:border-gold/35 focus:bg-white/8"
+            />
+          </div>
         </div>
 
         {filtrados.length === 0 ? (

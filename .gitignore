@@ -35,7 +35,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# IDE
+.idea/
+
 # Claude Code internal files (never commit)
 CLAUDE.md
 AGENTS.md
 ENCODING_MODAL_FIX.md
+.graphify-name

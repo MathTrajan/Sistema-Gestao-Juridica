@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
@@ -78,7 +77,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
@@ -103,9 +102,9 @@ export async function POST(req: Request) {
         escritorioId,
       },
     })
-    return NextResponse.json(processo, { status: 201 })
+    return apiJsonResponse(processo, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

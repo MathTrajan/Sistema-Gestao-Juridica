@@ -52,9 +52,19 @@ if (typeof setInterval !== 'undefined') {
 // Rotas bloqueadas para GERENTE
 const GERENTE_BLOQUEADAS = ['/configuracoes']
 
+// Espelho de AREA_ROUTES da Sidebar — fonte única de verdade para acesso por área
+const AREA_ROUTES: Record<string, string[]> = {
+  JURIDICO:      ['/dashboard', '/clientes', '/processos', '/datajud', '/tarefas', '/prazos'],
+  COMERCIAL:     ['/dashboard', '/clientes', '/comercial'],
+  FINANCEIRO:    ['/dashboard', '/financeiro'],
+  CONTROLADORIA: ['/dashboard', '/controladoria'],
+  MARKETING:     ['/dashboard', '/marketing'],
+}
+
 function checkRouteAccess(
   perfil: string,
   permissoes: string[],
+  area: string | null | undefined,
   pathname: string
 ): boolean {
   // Admin: acesso total
@@ -65,9 +75,12 @@ function checkRouteAccess(
     return !GERENTE_BLOQUEADAS.some(r => pathname === r || pathname.startsWith(r + '/'))
   }
 
-  // Colaborador: somente as rotas em permissoes
-  if (permissoes.length === 0) return pathname === '/dashboard'
-  return permissoes.some(r => pathname === r || pathname.startsWith(r + '/'))
+  // Colaborador: permissoes[] explícitas têm prioridade; senão, usa AREA_ROUTES da área
+  const allowed = permissoes.length > 0
+    ? permissoes
+    : (area ? (AREA_ROUTES[area] ?? ['/dashboard']) : ['/dashboard'])
+
+  return allowed.some(r => pathname === r || pathname.startsWith(r + '/'))
 }
 
 export default auth((req) => {
@@ -89,7 +102,7 @@ export default auth((req) => {
 
   const isLoggedIn = !!req.auth
   const isStaticAsset = /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|json|txt|map|xml|webmanifest|woff2?|eot|ttf|otf)$/i.test(pathname)
-  const isPublic = pathname.startsWith('/login') || pathname.startsWith('/api/auth')
+  const isPublic = pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname.startsWith('/api/cron')
 
   if (isPublic || isStaticAsset) return NextResponse.next()
 
@@ -102,8 +115,9 @@ export default auth((req) => {
     const token = req.auth as any
     const perfil = token?.user?.perfil as string | undefined
     const permissoes = (token?.user?.permissoes as string[]) ?? []
+    const area = token?.user?.area as string | null | undefined
 
-    if (perfil && !checkRouteAccess(perfil, permissoes, pathname)) {
+    if (perfil && !checkRouteAccess(perfil, permissoes, area, pathname)) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }

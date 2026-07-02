@@ -1,12 +1,20 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Users, FileText, CheckSquare, Clock } from 'lucide-react'
 import { GlassCard } from '@/components/dashboard/glass-card'
 import { StatCard } from '@/components/dashboard/stat-card'
-import { AnimatedChart } from '@/components/dashboard/animated-chart'
 import { AnimatedProgress } from '@/components/dashboard/animated-progress'
-import { ParticlesBackground } from '@/components/dashboard/particles-background'
+
+const AnimatedChart = dynamic(
+  () => import('@/components/dashboard/animated-chart').then((m) => m.AnimatedChart),
+  { loading: () => <div className="h-[260px] rounded-2xl bg-white/5 animate-pulse" /> }
+)
+
+const ParticlesBackground = dynamic(
+  () => import('@/components/dashboard/particles-background').then((m) => m.ParticlesBackground)
+)
 
 const periodoOptions = [
   { value: 'este-mes', label: 'Este mes' },
@@ -117,34 +125,10 @@ async function getDashboardData(escritorioId: string, periodo: string): Promise<
   const limite48h = new Date(agora.getTime() + 48 * 60 * 60 * 1000)
 
   const months = getChartMonths()
-  const monthlyCounts = await Promise.all(
-    months.map((month) =>
-      prisma.processo.count({
-        where: { escritorioId, createdAt: { gte: month.start, lt: month.end } },
-      })
-    )
-  )
-
-  const processosStatus = await prisma.processo.groupBy({
-    by: ['status'],
-    where: { escritorioId },
-    _count: { _all: true },
-  })
-
-  const statusSummary: DashboardData['statusSummary'] = processosStatus.map((item) => ({
-    label: statusLabelMap[item.status] ?? item.status,
-    count: item._count._all,
-    variant:
-      item.status === 'EM_ANDAMENTO'
-        ? 'gold'
-        : item.status === 'AGUARDANDO_CLIENTE' || item.status === 'AGUARDANDO_PECA'
-          ? 'warning'
-          : item.status === 'SUSPENSO'
-            ? 'info'
-            : 'danger',
-  }))
 
   const [
+    monthlyCounts,
+    processosStatus,
     totalClientes,
     totalProcessos,
     totalTarefas,
@@ -155,6 +139,18 @@ async function getDashboardData(escritorioId: string, periodo: string): Promise<
     clientesRecentes,
     tarefasPendentes,
   ] = await Promise.all([
+    Promise.all(
+      months.map((month) =>
+        prisma.processo.count({
+          where: { escritorioId, createdAt: { gte: month.start, lt: month.end } },
+        })
+      )
+    ),
+    prisma.processo.groupBy({
+      by: ['status'],
+      where: { escritorioId },
+      _count: { _all: true },
+    }),
     prisma.cliente.count({ where: { escritorioId, status: 'ATIVO' } }),
     prisma.processo.count({ where: { escritorioId, status: 'EM_ANDAMENTO' } }),
     prisma.tarefa.count({ where: { escritorioId, status: { in: ['A_FAZER', 'EM_ANDAMENTO'] } } }),
@@ -192,6 +188,19 @@ async function getDashboardData(escritorioId: string, periodo: string): Promise<
       include: { responsavel: { select: { nome: true } } },
     }),
   ])
+
+  const statusSummary: DashboardData['statusSummary'] = processosStatus.map((item) => ({
+    label: statusLabelMap[item.status] ?? item.status,
+    count: item._count._all,
+    variant:
+      item.status === 'EM_ANDAMENTO'
+        ? 'gold'
+        : item.status === 'AGUARDANDO_CLIENTE' || item.status === 'AGUARDANDO_PECA'
+          ? 'warning'
+          : item.status === 'SUSPENSO'
+            ? 'info'
+            : 'danger',
+  }))
 
   return {
     totalClientes,

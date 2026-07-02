@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
+import { guardGerenteOuSuperior } from '@/lib/permissions'
 import bcrypt from 'bcryptjs'
 import { PERFIS_USUARIO, AREAS_USUARIO } from '@/lib/constants'
 
@@ -8,11 +9,10 @@ export const dynamic = 'force-dynamic'
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
-  if (session.user.perfil !== 'GESTOR_GERAL' && session.user.perfil !== 'GERENTE') {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
+  const blocked = guardGerenteOuSuperior(session.user)
+  if (blocked) return blocked
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
@@ -40,9 +40,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       const { permissoes: _p, ...dataFallback } = data
       await prisma.usuario.updateMany({ where: { id, escritorioId }, data: dataFallback })
     }
-    return NextResponse.json({ success: true })
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

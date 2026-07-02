@@ -1,8 +1,19 @@
 {
+  "regions": ["gru1"],
   "crons": [
     {
       "path": "/api/cron/datajud",
       "schedule": "0 6 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/**/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/cron/datajud/route.ts": {
+      "memory": 1024,
+      "maxDuration": 300
+    }
+  }
 }

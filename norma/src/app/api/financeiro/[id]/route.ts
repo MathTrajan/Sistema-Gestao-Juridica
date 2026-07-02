@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { TIPOS_LANCAMENTO, STATUS_PAGAMENTO } from '@/lib/constants'
 import { guardArea } from '@/lib/permissions'
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
   if (bloqueado) return bloqueado
@@ -37,16 +37,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (body.recorrente !== undefined) data.recorrente = body.recorrente === true
 
     await prisma.lancamento.updateMany({ where: { id, escritorioId }, data })
-    return NextResponse.json({ success: true })
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
   if (bloqueado) return bloqueado
@@ -56,9 +56,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
   try {
     await prisma.lancamento.deleteMany({ where: { id, escritorioId } })
-    return NextResponse.json({ success: true })
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

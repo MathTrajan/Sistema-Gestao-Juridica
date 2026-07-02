@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
+import { guardGerenteOuSuperior } from '@/lib/permissions'
 import bcrypt from 'bcryptjs'
 import { PERFIS_USUARIO, AREAS_USUARIO } from '@/lib/constants'
 
@@ -8,7 +9,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
+
+  const blocked = guardGerenteOuSuperior(session.user)
+  if (blocked) return blocked
 
   const escritorioId = session.user.escritorioId
 
@@ -36,30 +40,29 @@ export async function GET() {
       })
       usuarios = sem.map((u: any) => ({ ...u, permissoes: [] }))
     }
-    return NextResponse.json(usuarios)
+    return apiJsonResponse(usuarios)
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
-  if (session.user.perfil !== 'GESTOR_GERAL' && session.user.perfil !== 'GERENTE') {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
+  const blocked = guardGerenteOuSuperior(session.user)
+  if (blocked) return blocked
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
 
   if (!body.nome || !body.email || !body.senha) {
-    return NextResponse.json({ error: 'Nome, e-mail e senha são obrigatórios' }, { status: 400 })
+    return apiErrorResponse('Nome, e-mail e senha são obrigatórios', 400)
   }
 
   if (typeof body.senha !== 'string' || body.senha.length < 8) {
-    return NextResponse.json({ error: 'Senha deve ter ao menos 8 caracteres' }, { status: 400 })
+    return apiErrorResponse('Senha deve ter ao menos 8 caracteres', 400)
   }
 
   try {
@@ -68,7 +71,7 @@ export async function POST(req: Request) {
     })
 
     if (existe) {
-      return NextResponse.json({ error: 'E-mail já cadastrado' }, { status: 400 })
+      return apiErrorResponse('E-mail já cadastrado', 400)
     }
 
     const senhaHash = await bcrypt.hash(body.senha, 10)
@@ -116,9 +119,9 @@ export async function POST(req: Request) {
       usuario = { ...usuario, permissoes: [] }
     }
 
-    return NextResponse.json(usuario, { status: 201 })
+    return apiJsonResponse(usuario, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

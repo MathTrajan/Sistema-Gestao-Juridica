@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { TIPOS_LANCAMENTO, STATUS_PAGAMENTO } from '@/lib/constants'
 import { guardArea } from '@/lib/permissions'
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
   if (bloqueado) return bloqueado
@@ -24,7 +24,7 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(lancamentos.map(l => ({
+    return apiJsonResponse(lancamentos.map(l => ({
       ...l,
       valor: Number(l.valor),
       dataVencimento: l.dataVencimento.toISOString(),
@@ -34,13 +34,13 @@ export async function GET() {
     })))
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const bloqueado = guardArea(session.user as any, 'FINANCEIRO')
   if (bloqueado) return bloqueado
@@ -50,12 +50,12 @@ export async function POST(req: Request) {
 
   const valor = Number(body.valor)
   if (isNaN(valor) || valor <= 0) {
-    return NextResponse.json({ error: 'Valor inválido' }, { status: 400 })
+    return apiErrorResponse('Valor inválido', 400)
   }
 
   const dataVencimento = new Date(body.dataVencimento)
   if (isNaN(dataVencimento.getTime())) {
-    return NextResponse.json({ error: 'Data de vencimento inválida' }, { status: 400 })
+    return apiErrorResponse('Data de vencimento inválida', 400)
   }
 
   try {
@@ -74,9 +74,16 @@ export async function POST(req: Request) {
         clienteId: body.clienteId || null,
       },
     })
-    return NextResponse.json(lancamento, { status: 201 })
+    return apiJsonResponse({
+      ...lancamento,
+      valor: Number(lancamento.valor),
+      dataVencimento: lancamento.dataVencimento.toISOString(),
+      dataPagamento: lancamento.dataPagamento?.toISOString() ?? null,
+      createdAt: lancamento.createdAt.toISOString(),
+      updatedAt: lancamento.updatedAt.toISOString(),
+    }, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

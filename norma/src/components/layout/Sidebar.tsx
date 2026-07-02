@@ -5,8 +5,9 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Cinzel, Inter } from 'next/font/google'
+import { Cinzel } from 'next/font/google'
 import { cn } from '@/lib/utils'
+import { APP_VERSION_LABEL } from '@/lib/version'
 import lightThemeLogo from '@/app/icon dark.png'
 import { useSidebar } from './SidebarContext'
 import {
@@ -19,10 +20,7 @@ import {
 const cinzel = Cinzel({
   subsets: ['latin'],
   weight: ['600', '700', '800'],
-})
-
-const inter = Inter({
-  subsets: ['latin'],
+  display: 'swap',
 })
 
 interface SidebarProps {
@@ -331,8 +329,8 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
                     NORMA
                   </p>
                   <p
-                    className={inter.className}
                     style={{
+                      fontFamily: 'var(--font-sans)',
                       marginTop: 6,
                       fontSize: 8,
                       fontWeight: 600,
@@ -470,6 +468,30 @@ export default function Sidebar({ user, badgeTarefas, badgePrazos }: SidebarProp
             </motion.button>
           )}
         </div>
+
+        {/* ── Version label ─────────────────────────────────────── */}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex justify-center pb-1"
+              style={{ paddingTop: 4 }}
+            >
+              <span style={{
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '1.8px',
+                textTransform: 'uppercase',
+                color: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.22)',
+              }}>
+                {APP_VERSION_LABEL}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Controls bar ─────────────────────────────────────── */}
         <div

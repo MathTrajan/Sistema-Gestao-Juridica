@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
+import { guardArea } from '@/lib/permissions'
 import { ETAPAS_FUNIL, TEMPERATURAS } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
+
+  const blocked = guardArea(session.user, 'COMERCIAL')
+  if (blocked) return blocked
 
   const escritorioId = session.user.escritorioId
 
@@ -20,7 +24,7 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(leads.map(l => ({
+    return apiJsonResponse(leads.map(l => ({
       ...l,
       valorEstimado: l.valorEstimado ? Number(l.valorEstimado) : null,
       dataContato: l.dataContato?.toISOString() ?? null,
@@ -29,19 +33,22 @@ export async function GET() {
     })))
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
+
+  const blocked = guardArea(session.user, 'COMERCIAL')
+  if (blocked) return blocked
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
 
   if (!body.nome?.trim()) {
-    return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
+    return apiErrorResponse('Nome é obrigatório', 400)
   }
 
   try {
@@ -62,9 +69,15 @@ export async function POST(req: Request) {
         escritorioId,
       },
     })
-    return NextResponse.json(lead, { status: 201 })
+    return apiJsonResponse({
+      ...lead,
+      valorEstimado: lead.valorEstimado ? Number(lead.valorEstimado) : null,
+      dataContato: lead.dataContato?.toISOString() ?? null,
+      createdAt: lead.createdAt.toISOString(),
+      updatedAt: lead.updatedAt.toISOString(),
+    }, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

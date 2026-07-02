@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { TIPOS_PRAZO, STATUS_PRAZO } from '@/lib/constants'
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const { searchParams } = new URL(req.url)
@@ -28,29 +28,33 @@ export async function GET(req: Request) {
         },
       },
     })
-    return NextResponse.json(prazos)
+    return apiJsonResponse(prazos)
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
+
+  if (!body.titulo?.trim()) {
+    return apiErrorResponse('Título é obrigatório', 400)
+  }
 
   const dataInicio = new Date(body.dataInicio)
   const dataFinal = new Date(body.dataFinal)
 
   if (isNaN(dataInicio.getTime()) || isNaN(dataFinal.getTime())) {
-    return NextResponse.json({ error: 'Datas inválidas' }, { status: 400 })
+    return apiErrorResponse('Datas inválidas', 400)
   }
 
-  if (!body.titulo?.trim()) {
-    return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
+  if (dataFinal < dataInicio) {
+    return apiErrorResponse('Data final não pode ser anterior à data de início', 400)
   }
 
   try {
@@ -60,7 +64,7 @@ export async function POST(req: Request) {
     })
 
     if (!processo) {
-      return NextResponse.json({ error: 'Processo não encontrado' }, { status: 404 })
+      return apiErrorResponse('Processo não encontrado', 404)
     }
 
     const prazo = await prisma.prazo.create({
@@ -75,9 +79,9 @@ export async function POST(req: Request) {
         processoId: processo.id,
       },
     })
-    return NextResponse.json(prazo, { status: 201 })
+    return apiJsonResponse(prazo, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { AlertTriangle, Pencil, Trash2, X, CalendarClock, CheckCircle2, Filter } from 'lucide-react'
+import { AlertTriangle, Pencil, Trash2, X, CalendarClock, CheckCircle2, Filter, Search } from 'lucide-react'
 import { GlassCard } from '@/components/dashboard/glass-card'
 import { cn } from '@/lib/utils'
 
@@ -60,6 +60,8 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
   const [confirmandoDeletar, setConfirmandoDeletar] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('')
 
   const [form, setForm] = useState({
     titulo: '',
@@ -82,6 +84,18 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
     () => prazos.filter((prazo) => prazo.status === 'ABERTO').length,
     [prazos]
   )
+
+  const prazosFiltrados = useMemo(() => {
+    const q = busca.trim().toLowerCase()
+    return prazos.filter((prazo) => {
+      const matchBusca = !q ||
+        prazo.titulo.toLowerCase().includes(q) ||
+        prazo.processo.cliente.nomeCompleto.toLowerCase().includes(q) ||
+        prazo.processo.numero?.toLowerCase().includes(q)
+      const matchStatus = !filtroStatus || prazo.status === filtroStatus
+      return matchBusca && matchStatus
+    })
+  }, [prazos, busca, filtroStatus])
 
   function abrirEditar(prazo: Prazo) {
     setForm({
@@ -220,9 +234,38 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
         </div>
       ) : null}
 
+      {/* Busca e filtro */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por título, cliente, número do processo..."
+            className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-gold/35 focus:bg-white/8"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-12 items-center rounded-2xl border border-white/10 bg-white/5 px-4 text-muted-foreground">
+            <Filter size={14} />
+          </span>
+          <select
+            value={filtroStatus}
+            onChange={e => setFiltroStatus(e.target.value)}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-foreground outline-none transition focus:border-gold/35"
+          >
+            <option value="">Todos os status</option>
+            <option value="ABERTO">Aberto</option>
+            <option value="CUMPRIDO">Cumprido</option>
+            <option value="PERDIDO">Perdido</option>
+            <option value="SUSPENSO">Suspenso</option>
+          </select>
+        </div>
+      </div>
+
       <GlassCard
         title="Agenda de prazos"
-        badge={{ text: `${prazos.length} itens`, variant: 'gold' }}
+        badge={{ text: `${prazosFiltrados.length} itens`, variant: 'gold' }}
         action={
           <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
             <Filter size={12} />
@@ -240,7 +283,12 @@ export default function PrazosClient({ prazos: inicial }: { prazos: Prazo[] }) {
           </div>
         ) : (
           <div className="space-y-4">
-            {prazos.map((prazo, index) => {
+            {prazosFiltrados.length === 0 && prazos.length > 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-sm text-muted-foreground">
+                Nenhum prazo corresponde aos filtros selecionados.
+              </div>
+            ) : null}
+            {prazosFiltrados.map((prazo, index) => {
               const status = statusConfig[prazo.status]
               const dias = getDiasRestantes(prazo.dataFinal)
               const critico = prazo.status === 'ABERTO' && dias <= 2

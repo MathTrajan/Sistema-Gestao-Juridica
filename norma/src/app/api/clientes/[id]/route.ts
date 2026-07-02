@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { AREAS_JURIDICAS, ORIGENS_CLIENTE, STATUS_CLIENTE, TIPOS_CLIENTE } from '@/lib/constants'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
@@ -22,17 +22,17 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       },
     })
 
-    if (!cliente) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
-    return NextResponse.json(cliente)
+    if (!cliente) return apiErrorResponse('Cliente não encontrado', 404)
+    return apiJsonResponse(cliente)
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
@@ -65,25 +65,53 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (body.dataContrato !== undefined) data.dataContrato = body.dataContrato ? new Date(body.dataContrato) : null
 
     await prisma.cliente.updateMany({ where: { id, escritorioId }, data })
-    return NextResponse.json({ success: true })
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const { id } = await params
   const escritorioId = session.user.escritorioId
 
   try {
-    await prisma.cliente.deleteMany({ where: { id, escritorioId } })
-    return NextResponse.json({ success: true })
+    const cliente = await prisma.cliente.findFirst({
+      where: { id, escritorioId },
+      select: {
+        _count: { select: { processos: true, lancamentos: true } },
+      },
+    })
+    if (!cliente) return apiErrorResponse('Cliente não encontrado', 404)
+
+    if (cliente._count.processos > 0) {
+      const n = cliente._count.processos
+      return apiErrorResponse(
+        `Este cliente possui ${n} processo${n > 1 ? 's' : ''} vinculado${n > 1 ? 's' : ''}. Inative-o ao invés de excluir.`,
+        409
+      )
+    }
+
+    if (cliente._count.lancamentos > 0) {
+      const n = cliente._count.lancamentos
+      return apiErrorResponse(
+        `Este cliente possui ${n} lançamento${n > 1 ? 's' : ''} financeiro${n > 1 ? 's' : ''} vinculado${n > 1 ? 's' : ''}. Inative-o ao invés de excluir.`,
+        409
+      )
+    }
+
+    await prisma.$transaction([
+      prisma.atendimento.deleteMany({ where: { clienteId: id } }),
+      prisma.documento.deleteMany({ where: { clienteId: id } }),
+      prisma.cliente.deleteMany({ where: { id, escritorioId } }),
+    ])
+    return apiJsonResponse({ success: true })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

@@ -3,12 +3,13 @@ import { Inter, JetBrains_Mono, Playfair_Display } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
-const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' })
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' })
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-serif',
   weight: ['500', '600', '700'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {

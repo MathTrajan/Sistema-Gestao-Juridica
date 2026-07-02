@@ -15,7 +15,14 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   // DataJud — opcional; endpoints de sync retornam 503 quando ausente
   DATAJUD_API_KEY: z.string().optional(),
-  CRON_SECRET: z.string().optional(),
+  // Cron — obrigatório em produção; o endpoint /api/cron/datajud sempre exige o token
+  CRON_SECRET: z
+    .string()
+    .refine(
+      (val) => process.env.NODE_ENV !== 'production' || (!!val && val.length >= 16),
+      'Em produção, CRON_SECRET deve ser definido com pelo menos 16 caracteres'
+    )
+    .optional(),
 })
 
 function validateEnv() {

@@ -16,31 +16,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.senha) return null
 
-        const usuario = await prisma.usuario.findFirst({
+        const usuarios = await prisma.usuario.findMany({
           where: {
             email: credentials.email as string,
             ativo: true,
           },
         })
 
-        if (!usuario) return null
+        if (usuarios.length === 0) return null
 
-        const senhaValida = await bcrypt.compare(
-          credentials.senha as string,
-          usuario.senha
-        )
-
-        if (!senhaValida) return null
-
-        return {
-          id: usuario.id,
-          name: usuario.nome,
-          email: usuario.email,
-          perfil: usuario.perfil,
-          escritorioId: usuario.escritorioId,
-          area: usuario.area ?? null,
-          permissoes: usuario.permissoes ?? [],
+        for (const usuario of usuarios) {
+          const senhaValida = await bcrypt.compare(
+            credentials.senha as string,
+            usuario.senha
+          )
+          if (senhaValida) {
+            return {
+              id: usuario.id,
+              name: usuario.nome,
+              email: usuario.email,
+              perfil: usuario.perfil,
+              escritorioId: usuario.escritorioId,
+              area: usuario.area ?? null,
+              permissoes: usuario.permissoes ?? [],
+            }
+          }
         }
+
+        return null
       },
     }),
   ],

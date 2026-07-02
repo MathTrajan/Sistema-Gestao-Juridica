@@ -10,17 +10,26 @@ export default async function TarefasPage() {
   const userData = session?.user as { escritorioId?: string } | undefined
   const escritorioId = userData?.escritorioId
 
-  const tarefasRaw = await prisma.tarefa
-    .findMany({
-      where: { escritorioId },
-      orderBy: [{ prioridade: 'desc' }, { dataVencimento: 'asc' }],
-      include: {
-        responsavel: { select: { id: true, nome: true } },
-        processo: { select: { id: true, numero: true } },
-        prazo: { select: { id: true, titulo: true } },
-      },
-    })
-    .catch(() => [])
+  const [tarefasRaw, usuariosRaw] = await Promise.all([
+    prisma.tarefa
+      .findMany({
+        where: { escritorioId },
+        orderBy: [{ prioridade: 'desc' }, { dataVencimento: 'asc' }],
+        include: {
+          responsavel: { select: { id: true, nome: true } },
+          processo: { select: { id: true, numero: true } },
+          prazo: { select: { id: true, titulo: true } },
+        },
+      })
+      .catch(() => []),
+    prisma.usuario
+      .findMany({
+        where: { escritorioId, ativo: true },
+        select: { id: true, nome: true },
+        orderBy: { nome: 'asc' },
+      })
+      .catch(() => []),
+  ])
 
   const tarefas = tarefasRaw.map(t => ({
     id: t.id,
@@ -37,7 +46,7 @@ export default async function TarefasPage() {
 
   return (
     <div className="page-enter px-6 py-8 xl:px-10">
-      <KanbanBoard tarefasIniciais={tarefas} />
+      <KanbanBoard tarefasIniciais={tarefas} usuarios={usuariosRaw} />
     </div>
   )
 }

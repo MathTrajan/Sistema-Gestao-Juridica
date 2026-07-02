@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiJsonResponse, apiErrorResponse } from '@/lib/api-helpers'
 import { STATUS_TAREFA, PRIORIDADES } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
 
@@ -17,38 +17,41 @@ export async function GET() {
       orderBy: [{ prioridade: 'desc' }, { dataVencimento: 'asc' }],
       include: {
         responsavel: { select: { id: true, nome: true } },
+        criador: { select: { id: true, nome: true } },
         processo: { select: { id: true, numero: true } },
         prazo: { select: { id: true, titulo: true } },
       },
     })
 
-    return NextResponse.json(tarefas.map(t => ({
+    return apiJsonResponse(tarefas.map(t => ({
       id: t.id,
       titulo: t.titulo,
       descricao: t.descricao,
       status: t.status,
       prioridade: t.prioridade,
       dataVencimento: t.dataVencimento ? t.dataVencimento.toISOString() : null,
+      dataConclusao: t.dataConclusao ? t.dataConclusao.toISOString() : null,
       responsavel: t.responsavel ?? null,
+      criador: t.criador ?? null,
       processo: t.processo ?? null,
       prazoId: t.prazoId,
       prazo: t.prazo ?? null,
     })))
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  if (!session) return apiErrorResponse('Não autorizado', 401)
 
   const escritorioId = session.user.escritorioId
   const body = await req.json()
 
   if (!body.titulo?.trim()) {
-    return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
+    return apiErrorResponse('Título é obrigatório', 400)
   }
 
   try {
@@ -58,7 +61,7 @@ export async function POST(req: Request) {
         select: { id: true },
       })
       if (!processo) {
-        return NextResponse.json({ error: 'Processo inválido' }, { status: 400 })
+        return apiErrorResponse('Processo inválido', 400)
       }
     }
 
@@ -72,7 +75,7 @@ export async function POST(req: Request) {
         select: { id: true },
       })
       if (!prazo) {
-        return NextResponse.json({ error: 'Prazo inválido' }, { status: 400 })
+        return apiErrorResponse('Prazo inválido', 400)
       }
     }
 
@@ -85,13 +88,14 @@ export async function POST(req: Request) {
         dataVencimento: body.dataVencimento ? new Date(body.dataVencimento) : null,
         escritorioId,
         responsavelId: body.responsavelId || null,
+        criadorId: session.user.id,
         processoId: body.processoId || null,
         prazoId: body.prazoId || null,
       },
     })
-    return NextResponse.json(tarefa, { status: 201 })
+    return apiJsonResponse(tarefa, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return apiErrorResponse('Erro interno', 500)
   }
 }

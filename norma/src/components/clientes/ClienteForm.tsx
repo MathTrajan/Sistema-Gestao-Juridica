@@ -8,6 +8,7 @@ import { clienteSchema, type ClienteFormData } from '@/lib/schemas'
 interface Props {
   clienteId?: string
   initialData?: Partial<ClienteFormData>
+  leadId?: string
 }
 
 const inputClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-[rgba(184,150,42,0.4)] focus:bg-white/[0.08]"
@@ -44,7 +45,7 @@ const estadoOptions = [
   'SP','SE','TO',
 ]
 
-export default function ClienteForm({ clienteId, initialData }: Props) {
+export default function ClienteForm({ clienteId, initialData, leadId }: Props) {
   const router = useRouter()
   const isEdit = !!clienteId
 
@@ -103,6 +104,17 @@ export default function ClienteForm({ clienteId, initialData }: Props) {
         const body = await res.json().catch(() => ({}))
         setError('root', { message: body.error ?? 'Erro ao salvar cliente' })
         return
+      }
+
+      if (!isEdit && leadId) {
+        const novoCliente = await res.json().catch(() => null)
+        if (novoCliente?.id) {
+          await fetch(`/api/leads/${leadId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clienteId: novoCliente.id }),
+          }).catch(() => {})
+        }
       }
 
       router.push(isEdit ? `/clientes/${clienteId}` : '/clientes')
