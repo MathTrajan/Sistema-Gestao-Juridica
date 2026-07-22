@@ -1,4 +1,8 @@
+<div align="center">
+
 # ⚖️ Norma — Sistema de Gestão Jurídica
+
+Sistema de gestão jurídica multi-tenant para escritórios de advocacia, com foco em operação diária, controle interno e visão gerencial. Integração com a API do **DataJud (CNJ)** para dados oficiais de processos.
 
 ![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
@@ -8,9 +12,9 @@
 ![NextAuth](https://img.shields.io/badge/NextAuth_v5-000000?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)
 
-Sistema de gestão jurídica multi-tenant para escritórios de advocacia, com foco em operação diária, controle interno e visão gerencial. Integração com a API do **DataJud (CNJ)** para dados oficiais de processos.
+</div>
 
-O app principal deste repositório está em [`norma/`](./norma).
+> O app principal deste repositório está em [`norma/`](./norma).
 
 ## Visão Geral
 
@@ -141,4 +145,12 @@ Perfis disponíveis:
 ## Status Atual
 
 O projeto está funcional e organizado para continuidade de desenvolvimento. Há melhorias técnicas ainda possíveis em lint e tipagem em alguns arquivos legados, mas isso não impede a publicação do repositório.
+
+---
+
+<div align="center">
+
+Desenvolvido por **Matheus Trajano** · [LinkedIn](https://www.linkedin.com/in/matheus-trajano-5179a7378/)
+
+</div>
 
