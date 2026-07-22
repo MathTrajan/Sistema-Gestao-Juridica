@@ -1,6 +1,14 @@
-# Norma
+# ⚖️ Norma — Sistema de Gestão Jurídica
 
-Sistema de gestão jurídica para escritórios de advocacia, com foco em operação diária, controle interno e visão gerencial.
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)
+![NextAuth](https://img.shields.io/badge/NextAuth_v5-000000?style=flat-square)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)
+
+Sistema de gestão jurídica multi-tenant para escritórios de advocacia, com foco em operação diária, controle interno e visão gerencial. Integração com a API do **DataJud (CNJ)** para dados oficiais de processos.
 
 O app principal deste repositório está em [`norma/`](./norma).
 
@@ -38,7 +46,7 @@ O projeto reúne os módulos centrais de um escritório:
 ```text
 Sistema-Gestao-Jurídico/
 ├─ norma/        # aplicação principal
-├─ ModeloV2/     # referências visuais e protótipos
+├─ Prototipos/   # referências visuais e protótipos
 ├─ Docs/         # arquivos de apoio e documentação
 └─ LogoMarca/    # materiais de marca
 ```
