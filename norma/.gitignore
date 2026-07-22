@@ -33,7 +33,7 @@ yarn-error.log*
 # env files
 .env*
 
-# Claude Code internal files
+# Arquivos internos de ferramentas
 CLAUDE.md
 AGENTS.md
 

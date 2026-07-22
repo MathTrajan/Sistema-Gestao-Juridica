@@ -20,7 +20,7 @@ norma/src/generated/
 norma/*.tsbuildinfo
 norma/next-env.d.ts
 
-# Claude Code internal files
+# Arquivos internos de ferramentas
 norma/CLAUDE.md
 norma/AGENTS.md
 .claude/
@@ -38,7 +38,7 @@ Thumbs.db
 # IDE
 .idea/
 
-# Claude Code internal files (never commit)
+# Arquivos internos de ferramentas (never commit)
 CLAUDE.md
 AGENTS.md
 ENCODING_MODAL_FIX.md
