@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { MainWrapper } from '@/components/layout/MainWrapper'
+import { VibeChatWidget } from '@/components/layout/VibeChatWidget'
 
 export default async function DashboardLayout({
   children,
@@ -23,13 +24,18 @@ export default async function DashboardLayout({
   const limitePrazo = new Date()
   limitePrazo.setHours(limitePrazo.getHours() + 48)
 
-  const [badgeTarefas, badgePrazos] = await Promise.all([
+  const [badgeTarefas, badgePrazos, escritorio] = await Promise.all([
     prisma.tarefa
       .count({ where: { escritorioId, status: { in: ['A_FAZER', 'EM_ANDAMENTO'] } } })
       .catch(() => 0),
     prisma.prazo
       .count({ where: { processo: { escritorioId }, status: 'ABERTO', dataFinal: { lte: limitePrazo } } })
       .catch(() => 0),
+    escritorioId
+      ? prisma.escritorio
+          .findUnique({ where: { id: escritorioId }, select: { nome: true } })
+          .catch(() => null)
+      : Promise.resolve(null),
   ])
 
   const user = session.user.name
@@ -61,6 +67,13 @@ export default async function DashboardLayout({
           <Topbar />
           {children}
         </MainWrapper>
+
+        {/* Suporte via chat — só na área autenticada */}
+        <VibeChatWidget
+          nome={session.user.name ?? ''}
+          email={session.user.email ?? ''}
+          empresa={escritorio?.nome ?? ''}
+        />
       </div>
     </SidebarProvider>
   )
